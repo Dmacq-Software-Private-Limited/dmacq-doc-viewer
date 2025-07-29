@@ -6,7 +6,6 @@ thumbnails/
 *.jpg
 *.heic
 *.bmp
-*.svg
 *.dds
 *.ico
 node_modules/
