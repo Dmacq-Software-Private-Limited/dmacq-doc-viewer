@@ -8,7 +8,7 @@ RUN apt-get update && apt-get install -y \
     imagemagick \
     libmagic1 \
     build-essential \
-    curl \
+    net-tools \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
