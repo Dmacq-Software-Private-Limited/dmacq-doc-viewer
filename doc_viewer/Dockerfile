@@ -11,6 +11,8 @@ RUN npm run build
 ####
 FROM nginx:alpine
 
+RUN apk add --no-cache net-tools
+
 RUN rm -rf /etc/nginx/conf.d/*
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
