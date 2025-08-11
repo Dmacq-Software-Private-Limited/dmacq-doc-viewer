@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { v4 as uuidv4 } from 'uuid';
+import DeleteConfirmationModal from './DeleteConfirmationModal';
 
 // UI Components
 import { Separator } from '@/components/ui/separator';
@@ -7,6 +8,9 @@ import { Separator } from '@/components/ui/separator';
 // Asset Imports
 import MoreOptionsIcon from '../../assets/icons/comments more options.svg';
 import ReplyIcon from '../../assets/icons/comments reply.svg';
+import EditIcon from '../../assets/icons/edit.svg';
+import DeleteIcon from '../../assets/icons/delete-comment.svg';
+import NoCommentIcon from '../../assets/icons/No-comment.svg';
 import person1 from '../../assets/icons/person_1.svg';
 import person2 from '../../assets/icons/person_2.svg';
 import person3 from '../../assets/icons/person_3.svg';
@@ -37,6 +41,9 @@ interface Comment {
 const CommentsPanel: React.FC<CommentsPanelProps> = ({ documentId }) => {
   const [sortOrder, setSortOrder] = useState<'latest' | 'oldest'>('latest');
   const [newComment, setNewComment] = useState('');
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [commentToDelete, setCommentToDelete] = useState<string | null>(null);
 
   const [comments, setComments] = useState<Comment[]>([
     { id: '1', user: 'Kiran Patel', content: 'The Invoice For March Is Yet To Arrive. Please Consult The Finance Team Regarding This.', timestamp: '2025-07-25T15:30:00Z' },
@@ -63,6 +70,19 @@ const CommentsPanel: React.FC<CommentsPanelProps> = ({ documentId }) => {
       const newComments = sortOrder === 'latest' ? [comment, ...comments] : [...comments, comment];
       setComments(newComments);
       setNewComment('');
+    }
+  };
+
+  const handleDeleteComment = (id: string) => {
+    setCommentToDelete(id);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = () => {
+    if (commentToDelete) {
+      setComments(comments.filter(comment => comment.id !== commentToDelete));
+      setShowDeleteModal(false);
+      setCommentToDelete(null);
     }
   };
 
@@ -97,9 +117,16 @@ const CommentsPanel: React.FC<CommentsPanelProps> = ({ documentId }) => {
       <div className="flex-1 flex flex-col min-h-0">
         <Separator className="-mx-5 w-[calc(100%+2.5rem)] h-px bg-gray-200" />
         <div className="flex-1 space-y-6 pt-3 overflow-y-auto custom-scroll scrollbar-hide">
-          {sortedComments.map((comment) => (
-            // 1. This is the main container
-            <div key={comment.id} className="space-y-1">
+          {sortedComments.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full text-center">
+              <img src={NoCommentIcon} alt="No comments" className="w-24 h-24 mb-4" />
+              <p className="self-stretch text-[var(--neutral-light-for-white-bg-neutral-1200, #192839)] text-center font-[Noto_Sans] text-base font-semibold leading-6">No comments yet</p>
+              <p className="self-stretch text-[#40566D] text-center font-[Noto_Sans] text-[13px] font-normal leading-[18px]">Start the conversation by adding your thoughts or feedback.</p>
+            </div>
+          ) : (
+            sortedComments.map((comment) => (
+              // 1. This is the main container
+              <div key={comment.id} className="space-y-1">
 
               {/* 2. This is the new header with vertical centering */}
               <div className="flex items-center justify-between">
@@ -122,7 +149,29 @@ const CommentsPanel: React.FC<CommentsPanelProps> = ({ documentId }) => {
                 </div>
                 <div className="flex gap-2 items-center">
                   <img src={ReplyIcon} alt="Reply" className="w-6 h-6 cursor-pointer" />
-                  <img src={MoreOptionsIcon} alt="Options" className="w-6 h-6 cursor-pointer" />
+                  <div className="relative">
+                    <button onClick={() => setOpenMenuId(openMenuId === comment.id ? null : comment.id)}>
+                      <img src={MoreOptionsIcon} alt="Options" className="w-6 h-6 cursor-pointer" />
+                    </button>
+                    {openMenuId === comment.id && (
+                      <div className="absolute right-[0px] top-[25px] w-[107px] rounded-lg bg-white shadow-lg z-10">
+                        <ul className="flex w-full flex-col items-start py-2">
+                          <li className="self-stretch">
+                            <a href="#" className="flex items-center self-stretch gap-2 px-4 py-2 text-sm font-normal font-[Noto_Sans] leading-5 text-[#192839] hover:bg-gray-100">
+                              <img src={EditIcon} alt="Edit" className="w-4 h-4" />
+                              Edit
+                            </a>
+                          </li>
+                          <li className="self-stretch">
+                            <button onClick={() => handleDeleteComment(comment.id)} className="flex items-center self-stretch gap-2 px-4 py-2 text-sm font-normal font-[Noto_Sans] leading-5 text-[#192839] hover:bg-gray-100 w-full">
+                              <img src={DeleteIcon} alt="Delete" className="w-4 h-4" />
+                              Delete
+                            </button>
+                          </li>
+                        </ul>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -131,7 +180,8 @@ const CommentsPanel: React.FC<CommentsPanelProps> = ({ documentId }) => {
                 {comment.content}
               </p>
             </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
 
@@ -174,7 +224,12 @@ const CommentsPanel: React.FC<CommentsPanelProps> = ({ documentId }) => {
         </button>
       </div>
     </div>
-
+    {showDeleteModal && (
+      <DeleteConfirmationModal
+        onCancel={() => setShowDeleteModal(false)}
+        onConfirm={confirmDelete}
+      />
+    )}
     </div>
   );
 };

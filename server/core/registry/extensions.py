@@ -8,7 +8,7 @@ OFFICE_DOC_EXTENSIONS = [
 ]
 
 OFFICE_SHEET_EXTENSIONS = [
-    '.xls', '.xlsx', '.ods', '.fods', '.csv'
+    '.xls', '.xlsx', '.ods', '.fods', '.csv','.xlsb'
 ]
 
 OFFICE_PRESENTATION_EXTENSIONS = [
@@ -23,7 +23,7 @@ EMAIL_EXTENSIONS = ['.msg', '.eml']
 
 IMAGE_EXTENSIONS = [
     '.jpg', '.jpeg', '.jpe', '.jfif', '.jps', '.png', '.bmp', '.gif', '.webp',
-    '.tif', '.tiff', '.heif', '.heic', '.avif', '.ico', '.dds', '.svg'
+    '.tif', '.tiff', '.heif', '.heic', '.avif', '.ico', '.dds', '.svg', '.cur', '.pam','.picon'
 ]
 
 AUDIO_EXTENSIONS = [
@@ -54,6 +54,11 @@ CODE_EXTENSIONS = [
 CONFIG_DATA_EXTENSIONS = [
     '.xsd', '.yaml', '.yml', '.toml', '.ini', '.cfg', '.conf', '.log'
 ]
+MISC_EXTENSIONS =['.outlook', '.mht', '.pes', '.pfm', '.picon', '.mpp']
+
+ARCHIVE_EXTENSIONS = [
+    '.zip', '.rar', '.7z', '.tar', '.gz', '.tgz', '.bz2', '.tbz2', '.xz', '.iso', '.dmg'
+]
 
 # Composite groups
 OFFICE_EXTENSIONS = (
@@ -80,5 +85,7 @@ SUPPORTED_EXTENSIONS = {
     *FALLBACK_EXTENSIONS,
     *THREED_EXTENSIONS,
     *CODE_EXTENSIONS,
-    *CONFIG_DATA_EXTENSIONS
+    *CONFIG_DATA_EXTENSIONS,
+    *ARCHIVE_EXTENSIONS,
+    *MISC_EXTENSIONS
 }

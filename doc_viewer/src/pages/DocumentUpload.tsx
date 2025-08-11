@@ -136,7 +136,7 @@ const DocumentUpload = () => {
                   onChange={(e) => handleFileUpload(e.target.files)}
                   className="hidden"
                   id="file-upload"
-                  accept=".obj,.glb,.gltf,.stl,.pak,.wad,.sav,.mdx,.rom,.doc,.docx,.odt,.sxw,.fodt,.rtf,.txt,.md,.tex,.pdf,.abw,.msg,.eml,.xls,.xlsx,.ods,.fods,.csv,.ppt,.pptx,.pps,.ppsx,.odp,.fodp,.sxi,.jpg,.jpeg,.jpe,.jfif,.jps,.png,.bmp,.gif,.webp,.tif,.tiff,.heif,.heic,.avif,.ico,.dds,.svg,.ai,.eps,.cdr,.psd,.sketch,.xcf,.mp3,.wav,.m4a,.flac,.aac,.ogg,.mp4,.avi,.mov,.mkv,.webm,.otf,.ttf,.woff,.woff2,.eot,.lit,.azw,.azw3,.fb2,.cbr,.cbz,.mdb,.accdb,.sqlite,.db,.dbf,.ndf,.ldf,.indd, .idml, .qxd, .sla, .pub, .xsd, .yaml, .yml, .toml, .ini, .cfg, .conf, .log, .bak, .tmp,.cur,.dng,.raw,.exr,.hdr,.pam,.pbm,.pcd,.pcx,.pgm,.pict,.pnm,.ppm,.psd,.ras,.sgi,.tga,.xbm,.xpm,.xwd,.html,.xhtml,.xht,.mhtml,.css,.js,.php,.xml,.json,.ts,.tsx,.c,.cpp,.java,.py,.rb,.go,.cs,.swift,.vb,.pl,.r,.jl,.kt,.dart,.h,.hpp,.outlook, .mht, .pes, .pfm, .picon, .mpp"
+                  accept=".obj,.glb,.gltf,.stl,.pak,.wad,.sav,.mdx,.rom,.doc,.docx,.odt,.sxw,.fodt,.rtf,.txt,.md,.tex,.pdf,.abw,.msg,.eml,.xls,.xlsx,.ods,.fods,.csv,.ppt,.pptx,.pps,.ppsx,.odp,.fodp,.sxi,.jpg,.jpeg,.jpe,.jfif,.jps,.png,.bmp,.gif,.webp,.tif,.tiff,.heif,.heic,.avif,.ico,.dds,.svg,.ai,.eps,.cdr,.psd,.sketch,.xcf,.mp3,.wav,.m4a,.flac,.aac,.ogg,.mp4,.avi,.mov,.mkv,.webm,.otf,.ttf,.woff,.woff2,.eot,.lit,.azw,.azw3,.fb2,.cbr,.cbz,.mdb,.accdb,.sqlite,.db,.dbf,.ndf,.ldf,.indd, .idml, .qxd, .sla, .pub, .xsd, .yaml, .yml, .toml, .ini, .cfg, .conf, .log, .bak, .tmp,.cur,.dng,.raw,.exr,.hdr,.pam,.pbm,.pcd,.pcx,.pgm,.pict,.pnm,.ppm,.psd,.ras,.sgi,.tga,.xbm,.xpm,.xwd,.html,.xhtml,.xht,.mhtml,.css,.js,.php,.xml,.json,.ts,.tsx,.c,.cpp,.java,.py,.rb,.go,.cs,.swift,.vb,.pl,.r,.jl,.kt,.dart,.h,.hpp,.outlook, .mht, .pes, .pfm, .picon, .mpp,.zip,.rar,.7z,.tar,.gz,.tgz,.bz2,.tbz2,.xz,.iso,.dmg"
 
                   disabled={isUploading}
                 />
@@ -150,7 +150,7 @@ const DocumentUpload = () => {
                   Select Files
                 </Button>
                 <p className="text-sm text-gray-500">
-                  Maximum file size: 50MB per file • Supported: Spreadsheets (XLS, XLSX, ODS, CSV), Presentations (PPT, PPTX, ODP), Images (JPG, PNG, SVG, etc.), Documents (DOC, DOCX, PDF, TXT, MD)
+                  Maximum file size: 50MB per file • Supported: Spreadsheets (XLS, XLSX, ODS, CSV), Presentations (PPT, PPTX, ODP), Images (JPG, PNG, SVG, etc.), Documents (DOC, DOCX, PDF, TXT, MD), Archives (ZIP, RAR, 7Z, etc.)
                 </p>
               </div>
             </div>

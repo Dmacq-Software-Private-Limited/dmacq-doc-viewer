@@ -20,7 +20,7 @@ export default {
 		extend: {
 			fontFamily: {
 				noto: ['"Noto Sans"', 'sans-serif'],
-			  },
+			},
 			colors: {
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',

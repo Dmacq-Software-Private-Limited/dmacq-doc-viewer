@@ -48,6 +48,17 @@ class DocumentService:
         """Get document by ID"""
         return self.documents.get(document_id)
 
+    def delete_document(self, document_id: str):
+        """Delete document by ID"""
+        document = self.documents.pop(document_id, None)
+        if document:
+            if document.file_path and os.path.exists(document.file_path):
+                os.remove(document.file_path)
+            if document.converted_path and os.path.exists(document.converted_path):
+                os.remove(document.converted_path)
+            if document.thumbnail_path and os.path.exists(document.thumbnail_path):
+                os.remove(document.thumbnail_path)
+
     async def get_page_image(self, document_id: str, page_number: int) -> Optional[str]:
         """Get page as image using the appropriate handler"""
         document = self.get_document(document_id)
