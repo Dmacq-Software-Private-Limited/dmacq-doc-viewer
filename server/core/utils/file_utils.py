@@ -1,6 +1,15 @@
 # core/utils/file_utils.py
 import os
+import magic
 from pathlib import Path
+
+def get_mime_type(file_path: str) -> str:
+    """Get MIME type of a file using python-magic"""
+    try:
+        mime = magic.Magic(mime=True)
+        return mime.from_file(file_path)
+    except Exception:
+        return 'application/octet-stream'
 
 def format_file_size(size_bytes: int) -> str:
     """Format file size in human-readable format"""

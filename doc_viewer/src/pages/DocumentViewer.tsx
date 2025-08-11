@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { FileText } from "lucide-react";
 import DocumentHeader from "@/components/document-viewer/DocumentHeader";
 import DocumentViewer from "@/components/document-viewer/DocumentViewer";
 import PageNavigation from "@/components/document-viewer/PageNavigation";
@@ -8,15 +7,29 @@ import MetadataPanel from "@/components/document-viewer/MetadataPanel";
 import DetailsPanel from "@/components/document-viewer/DetailsPanel";
 import AuditTrailPanel from "@/components/document-viewer/AuditTrailPanel";
 import CommentsPanel from "@/components/document-viewer/CommentsPanel";
+import AnnotationPanel from "@/components/document-viewer/AnnotationPanel";
 import FontViewer from "@/components/document-viewer/FontViewer";
-import metadataIcon from "../assets/icons/Icon=Metadata.svg";
-import commentsIcon from "../assets/icons/Icon=Comment.svg";
-import auditIcon from "../assets/icons/Icon=Audit Log.svg";
-import detailsIcon from "../assets/icons/Icon=Details.svg";
-import PanelLeft from "../assets/icons/sidebar.svg";
+import metadataIcon from "@/assets/icons/Icon=Metadata.svg";
+import commentsIcon from "@/assets/icons/Icon=Comment.svg";
+import auditIcon from "@/assets/icons/Icon=Audit Log.svg";
+import detailsIcon from "@/assets/icons/Icon=Details.svg";
+import annotationIcon from "@/assets/icons/AnnotationIcon.svg";
+import managePdfIcon from "@/assets/icons/ManagePdf.svg";
+import managePdfOnClickIcon from "@/assets/icons/ManagePdfonclick.svg";
+import HighlighterIcon from "@/assets/icons/Annotation-Highlighter.svg";
+import SquareIcon from "@/assets/icons/Annotation-square.svg";
+import ReductionIcon  from "@/assets/icons/Annotation-reduction.svg";
+import TextIcon  from "@/assets/icons/Annotation-Text.svg";
+import  StickyNoteIcon  from "@/assets/icons/Annotation-stickynote.svg";
+import StampIcon  from "@/assets/icons/Annotation-stamp.svg";
+import DropdownIcon  from "@/assets/icons/Annotation-Dropdown.svg";
+import PanelLeft from "@/assets/icons/sidebar.svg";
+import Search from "../assets/icons/search.svg";
 import "../App.css";
 import { cn } from "@/lib/utils";
 import { apiService, DocumentDetails } from "../services/apiService";
+import { getViewerType, ViewerType } from '../components/document-viewer/lib/getViewerType'
+import SearchPanel from "@/components/document-viewer/SearchPanel";
 
 
 export interface DocumentMetadata {
@@ -34,7 +47,7 @@ export interface DocumentMetadata {
   [key: string]: unknown;
 }
 
-type PanelType = "metadata" | "details" | "audit" | "comments";
+type PanelType = "metadata" | "details" | "audit" | "comments" | "annotation" | "manage";
 
 const FONT_MIME_TYPES = [
   'font/otf',
@@ -55,14 +68,40 @@ const DocumentViewerPage = () => {
   const [rotation, setRotation] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [activePanel, setActivePanel] = useState<PanelType>("metadata");
+  const [isAnnotationToolbarOpen, setAnnotationToolbarOpen] = useState(false);
   const [extractedMetadata, setExtractedMetadata] = useState(null);
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(true);
   const [rightSidebarOpen, setRightSidebarOpen] = useState(false);
+  const [isSearchPanelOpen, setIsSearchPanelOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState({ count: 0, current: 0 });
+
+  const handleNextSearch = useCallback(() => {
+    if (searchResults.count > 0) {
+      setSearchResults(prev => ({
+        ...prev,
+        current: prev.current % prev.count + 1,
+      }));
+    }
+  }, [searchResults.count]);
+
+  const handlePreviousSearch = useCallback(() => {
+    if (searchResults.count > 0) {
+      setSearchResults(prev => ({
+        ...prev,
+        current: (prev.current - 2 + prev.count) % prev.count + 1,
+      }));
+    }
+  }, [searchResults.count]);
 
   // Backend integration states
   const [documentDetails, setDocumentDetails] = useState<DocumentDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const handleSearchClick = () => {
+    setIsSearchPanelOpen(prev => !prev);
+  };
 
   // Fallback document data (keeping original structure)
   const fallbackDocument = {
@@ -174,7 +213,21 @@ const DocumentViewerPage = () => {
   };
 
 
+  const handleThumbnailClick = (page: number) => {
+    setCurrentPage(page);
+  };
+
   const handlePanelTabClick = (tabId: PanelType) => {
+    if (tabId === "manage") {
+      navigate(`/document/${documentId}/manage`);
+      return;
+    }
+    if (tabId === "annotation") {
+      setAnnotationToolbarOpen(!isAnnotationToolbarOpen);
+    } else {
+      setAnnotationToolbarOpen(false);
+    }
+
     if (activePanel === tabId && rightSidebarOpen) {
       setRightSidebarOpen(false);
     } else {
@@ -280,9 +333,14 @@ const DocumentViewerPage = () => {
   const panelTabs = [
     { id: "metadata", label: "Metadata", icon: metadataIcon },
     { id: "details", label: "Details", icon: detailsIcon },
+    { id: "annotation", label: "Annotation", icon: annotationIcon },
     { id: "audit", label: "Audit Trail", icon: auditIcon },
     { id: "comments", label: "Comments", icon: commentsIcon },
   ];
+
+  if (getViewerType(documentData) === 'PDF') {
+    panelTabs.splice(2, 0, { id: "manage", label: "Manage PDF", icon: managePdfIcon, onClickIcon: managePdfOnClickIcon } as any);
+  }
 
 
   // Loading state
@@ -318,8 +376,12 @@ const DocumentViewerPage = () => {
       )}
     >
       {!isFullscreen && (
-        <DocumentHeader doc={documentData} onClose={handleClose} />
+          <>
+            <DocumentHeader doc={documentData} onClose={handleClose} />
+
+          </>
       )}
+
       <div className="flex flex-1 overflow-hidden relative">
 
 
@@ -356,7 +418,7 @@ const DocumentViewerPage = () => {
           documentId={documentData.id}
           currentPage={currentPage}
           totalPages={totalPages}
-          onPageChange={setCurrentPage}
+          onPageChange={handleThumbnailClick}
         />
       </div>
     </div>
@@ -384,8 +446,24 @@ const DocumentViewerPage = () => {
           )}
           style={{ height: '100%' }}
         >
+          {/* Search Panel */}
+          {isSearchPanelOpen && (
+            <SearchPanel
+              onClose={() => {
+                setIsSearchPanelOpen(false);
+                setSearchQuery('');
+                setSearchResults({ count: 0, current: 0 });
+              }}
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              searchResults={searchResults}
+              onNext={handleNextSearch}
+              onPrevious={handlePreviousSearch}
+            />
+          )}
+
           {/* Document Preview with zoom and rotation */}
-          <div className="flex flex-col items-center justify-center h-full w-full" style={{ padding: '33px 20px', background: '#E3EAF3' }}>
+          <div className="flex flex-col items-center justify-center h-full w-full" style={{ padding: '0px 20px', background: '#E3EAF3' }}>
             <div
               className="relative"
               style={{
@@ -414,6 +492,9 @@ const DocumentViewerPage = () => {
                   onTotalPagesChange={setTotalPages}
                   onMetadataExtracted={handleMetadataExtracted}
                   isFullscreen={isFullscreen}
+                  searchQuery={searchQuery}
+                  onSearchResults={setSearchResults}
+                  searchResult={searchResults}
                 />
               )}
             </div>
@@ -421,10 +502,27 @@ const DocumentViewerPage = () => {
 
           {/* Bottom Navigation Toolbar */}
           <div
-            className="absolute bottom-5 left-1/2 transform -translate-x-1/2 flex p-1.5 items-center gap-1 rounded z-50"
+            className="absolute bottom-5 left-1/2 transform -translate-x-1/2 flex p-1.5 gap-1 items-center rounded z-50"
             style={{ backgroundColor: "#0C1927" }}
           >
-            <div className="flex w-42 items-center gap-1">
+            {/* Search Button */}
+            <div
+              className="flex items-center rounded"
+              // Apply conditional background style
+              style={{ backgroundColor: isSearchPanelOpen ? '#305EFF' : '#0C1927' }}
+            >
+              <button
+                onClick={handleSearchClick} // Add the onClick handler
+                className="flex p-1.5 items-center rounded"
+              >
+                <img
+                  src={Search}
+                  alt="Search Icon"
+                  className="w-5 h-5"
+                />
+              </button>
+            </div>
+            <div className="flex w-42 items-center gap-1" key={totalPages}>
               {/* Page Navigation */}
               <div
                 className="flex h-8 px-3 pr-1 items-center gap-2 rounded"
@@ -454,7 +552,7 @@ const DocumentViewerPage = () => {
                     disabled={currentPage === 1}
                     className="flex p-1 flex-col justify-center items-center gap-2 flex-1 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600 rounded transition-colors"
                   >
-                    <svg width="16" height="10" viewBox="0 0 16 10" fill="none">
+                    <svg width="16" height="10" viewBox="0 0 16 10" fill="none" className="pointer-events-none">
                       <path
                         d="M4.33031 5.68098L7.21591 2.67318C7.65042 2.22027 8.35232 2.22027 8.78684 2.67318L11.6724 5.68098C12.3743 6.41261 11.873 7.66683 10.8814 7.66683H5.11021C4.11863 7.66683 3.62841 6.41261 4.33031 5.68098Z"
                         fill="#768EA7"
@@ -466,7 +564,7 @@ const DocumentViewerPage = () => {
                     disabled={currentPage === totalPages}
                     className="flex flex-col justify-center items-center gap-2 flex-1 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600 rounded transition-colors"
                   >
-                    <svg width="16" height="10" viewBox="0 0 16 10" fill="none">
+                    <svg width="16" height="10" viewBox="0 0 16 10" fill="none" className="pointer-events-none">
                       <path
                         d="M4.33031 4.31902L7.21591 7.32682C7.65042 7.77973 8.35232 7.77973 8.78684 7.32682L11.6724 4.31902C12.3743 3.58739 11.873 2.33317 10.8814 2.33317H5.11021C4.11863 2.33317 3.62841 3.58739 4.33031 4.31902Z"
                         fill="#768EA7"
@@ -513,7 +611,7 @@ const DocumentViewerPage = () => {
                 </button>
               </div>
             </div>
-
+            
             {/* Action Buttons */}
             <button
               onClick={handleRotate}
@@ -537,6 +635,31 @@ const DocumentViewerPage = () => {
                 />
               </svg>
             </button>
+            {isAnnotationToolbarOpen && (
+              <>
+                <button className="flex p-1.5 items-center gap-1 rounded hover:bg-gray-600 transition-colors">
+                  <img src={HighlighterIcon} alt="Highlighter" className="w-5 h-5" />
+                  <img src={DropdownIcon} alt="Dropdown" className="w-[5px] h-[3px]" />
+                </button>
+                <button className="flex p-1.5 items-center gap-1 rounded hover:bg-gray-600 transition-colors">
+                  <img src={SquareIcon} alt="Square" className="w-5 h-5" />
+                  <img src={DropdownIcon} alt="Dropdown" className="w-[5px] h-[3px]" />
+                </button>
+                <button className="flex p-1.5 items-center gap-1 rounded hover:bg-gray-600 transition-colors">
+                  <img src={ReductionIcon} alt="Reduction" className="w-5 h-5" />
+                  <img src={DropdownIcon} alt="Dropdown" className="w-[5px] h-[3px]" />
+                </button>
+                <button className="flex p-1.5 items-center gap-2 rounded hover:bg-gray-600 transition-colors">
+                  <img src={TextIcon} alt="Text" className="w-5 h-5" />
+                </button>
+                <button className="flex p-1.5 items-center gap-2 rounded hover:bg-gray-600 transition-colors">
+                  <img src={StickyNoteIcon} alt="Sticky Note" className="w-5 h-5" />
+                </button>
+                <button className="flex p-1.5 items-center gap-2 rounded hover:bg-gray-600 transition-colors">
+                  <img src={StampIcon} alt="Stamp" className="w-5 h-5" />
+                </button>
+              </>
+            )}
           </div>
         </div>
 
@@ -544,11 +667,9 @@ const DocumentViewerPage = () => {
           <div className="hidden lg:flex h-full">
             {rightSidebarOpen && (
               <div
-
-                className="bg-white border-r border-gray-200 overflow-y-auto w-[320px] no-scrollbar"
+                className="bg-white border-r border-gray-200 overflow-y-auto w-[320px] no-scrollbar px-5"
                 style={{
                   display: "flex",
-                  padding: "20px",
                   flexDirection: "column",
                   alignItems: "flex-start",
                   gap: "20px",
@@ -572,6 +693,7 @@ const DocumentViewerPage = () => {
                 {activePanel === "comments" && (
                   <CommentsPanel documentId={documentId} />
                 )}
+                {activePanel === "annotation" && <AnnotationPanel />}
               </div>
             )}
             <div
@@ -587,14 +709,14 @@ const DocumentViewerPage = () => {
                 height: "704px",
               }}
             >
-              {panelTabs.map((tab) => (
+              {panelTabs.map((tab: any) => (
                 <button
                   key={tab.id}
                   onClick={() => handlePanelTabClick(tab.id as PanelType)}
                   className={cn(
-                    "w-12 h-12 gap-8 flex items-center justify-center",
+                    "w-12 h-12 gap-8 flex items-center justify-center rounded-md",
                     activePanel === tab.id && rightSidebarOpen
-                      ? "bg-blue-50 border-l-4 border-[#2950da]"
+                      ? "bg-[#F5F8FF] border-2 border-[#2950DA]"
                       : "hover:bg-gray-100",
                   )}
                 >
@@ -677,6 +799,20 @@ const DocumentViewerPage = () => {
                         }
                       />
                     </svg>
+                  )}
+                  {tab.id === "annotation" && (
+                    <img
+                      src={tab.icon}
+                      alt={tab.label}
+                      className="w-6 h-6"
+                    />
+                  )}
+                  {tab.id === "manage" && (
+                    <img
+                      src={activePanel === tab.id && rightSidebarOpen ? tab.onClickIcon : tab.icon}
+                      alt={tab.label}
+                      className="w-6 h-6"
+                    />
                   )}
                 </button>
               ))}

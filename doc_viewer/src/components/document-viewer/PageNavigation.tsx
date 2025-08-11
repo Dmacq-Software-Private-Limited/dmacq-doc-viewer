@@ -15,22 +15,12 @@ const PageNavigation: React.FC<PageNavigationProps> = ({
   documentId,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const itemRefs = useRef<(HTMLElement | null)[]>([]);
 
   useEffect(() => {
     itemRefs.current = itemRefs.current.slice(0, totalPages);
   }, [totalPages]);
 
-  useEffect(() => {
-    const activeItem = itemRefs.current[currentPage - 1];
-    if (activeItem) {
-      activeItem.scrollIntoView({
-        behavior: 'smooth',
-        block: 'nearest',
-        inline: 'nearest',
-      });
-    }
-  }, [currentPage]);
 
   return (
     <div
@@ -45,7 +35,6 @@ const PageNavigation: React.FC<PageNavigationProps> = ({
         background: '#FFF'
       }}
     >
-     
 
       <div
         className="flex-1 overflow-auto scroll-smooth no-scrollbar"
@@ -53,10 +42,16 @@ const PageNavigation: React.FC<PageNavigationProps> = ({
         style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}
       >
         {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-          <div
+          <button
             key={page}
             ref={(el) => (itemRefs.current[page - 1] = el)}
-            onClick={() => onPageChange(page)}
+            data-page={page}
+            onClick={(e) => {
+              const pageNum = parseInt(e.currentTarget.getAttribute('data-page') || '0');
+              if (pageNum > 0) {
+                onPageChange(pageNum);
+              }
+            }}
             className={`cursor-pointer overflow-hidden transition-all duration-200`}
             style={{
               width: '76px',
@@ -93,7 +88,7 @@ const PageNavigation: React.FC<PageNavigationProps> = ({
                 </div>
               )}
             </div>
-          </div>
+          </button>
         ))}
       </div>
     </div>

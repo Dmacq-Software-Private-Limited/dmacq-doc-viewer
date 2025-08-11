@@ -30,11 +30,17 @@ class Settings(BaseSettings):
             '.xlsx': 'core.file_handlers.office_handler.OfficeHandler',
             '.ods': 'core.file_handlers.office_handler.OfficeHandler',
             '.csv': 'core.file_handlers.office_handler.OfficeHandler',
+            '.fods': 'core.file_handlers.office_handler.OfficeHandler',
+            '.xlsb': 'core.file_handlers.office_handler.OfficeHandler',
 
             # Presentations
             '.ppt': 'core.file_handlers.office_handler.OfficeHandler',
             '.pptx': 'core.file_handlers.office_handler.OfficeHandler',
             '.odp': 'core.file_handlers.office_handler.OfficeHandler',
+            '.ppsx': 'core.file_handlers.office_handler.OfficeHandler',
+            '.pps': 'core.file_handlers.office_handler.OfficeHandler',
+            '.sxi': 'core.file_handlers.office_handler.OfficeHandler',
+            '.fodp': 'core.file_handlers.office_handler.OfficeHandler',
 
             # Text-based files
             '.txt': 'core.file_handlers.text_handler.TextHandler',
@@ -67,13 +73,47 @@ class Settings(BaseSettings):
             # Images
             '.jpg': 'core.file_handlers.image_handler.ImageHandler',
             '.jpeg': 'core.file_handlers.image_handler.ImageHandler',
+            '.jpe': 'core.file_handlers.image_handler.ImageHandler',
+            '.jfif': 'core.file_handlers.image_handler.ImageHandler',
+            '.jps': 'core.file_handlers.image_handler.ImageHandler',
             '.png': 'core.file_handlers.image_handler.ImageHandler',
+            '.bmp': 'core.file_handlers.image_handler.ImageHandler',
             '.gif': 'core.file_handlers.image_handler.ImageHandler',
             '.webp': 'core.file_handlers.image_handler.ImageHandler',
-            '.bmp': 'core.file_handlers.image_handler.ImageHandler',
-            '.tiff': 'core.file_handlers.image_handler.ImageHandler',
             '.tif': 'core.file_handlers.image_handler.ImageHandler',
+            '.tiff': 'core.file_handlers.image_handler.ImageHandler',
+            '.heif': 'core.file_handlers.image_handler.ImageHandler',
+            '.heic': 'core.file_handlers.image_handler.ImageHandler',
+            '.avif': 'core.file_handlers.image_handler.ImageHandler',
+            '.ico': 'core.file_handlers.image_handler.ImageHandler',
+            '.dds': 'core.file_handlers.image_handler.ImageHandler',
             '.svg': 'core.file_handlers.image_handler.ImageHandler',
+            '.ai': 'core.file_handlers.image_handler.ImageHandler',
+            '.eps': 'core.file_handlers.image_handler.ImageHandler',
+            '.cdr': 'core.file_handlers.image_handler.ImageHandler',
+            '.psd': 'core.file_handlers.image_handler.ImageHandler',
+            '.sketch': 'core.file_handlers.image_handler.ImageHandler',
+            '.xcf': 'core.file_handlers.image_handler.ImageHandler',
+            '.cur': 'core.file_handlers.image_handler.ImageHandler',
+            '.dng': 'core.file_handlers.image_handler.ImageHandler',
+            '.raw': 'core.file_handlers.image_handler.ImageHandler',
+            '.exr': 'core.file_handlers.image_handler.ImageHandler',
+            '.hdr': 'core.file_handlers.image_handler.ImageHandler',
+            '.pam': 'core.file_handlers.image_handler.ImageHandler',
+            '.pbm': 'core.file_handlers.image_handler.ImageHandler',
+            '.pcd': 'core.file_handlers.image_handler.ImageHandler',
+            '.pcx': 'core.file_handlers.image_handler.ImageHandler',
+            '.pgm': 'core.file_handlers.image_handler.ImageHandler',
+            '.pict': 'core.file_handlers.image_handler.ImageHandler',
+            '.pnm': 'core.file_handlers.image_handler.ImageHandler',
+            '.ppm': 'core.file_handlers.image_handler.ImageHandler',
+            '.ras': 'core.file_handlers.image_handler.ImageHandler',
+            '.sgi': 'core.file_handlers.image_handler.ImageHandler',
+            '.tga': 'core.file_handlers.image_handler.ImageHandler',
+            '.xbm': 'core.file_handlers.image_handler.ImageHandler',
+            '.xpm': 'core.file_handlers.image_handler.ImageHandler',
+            '.xwd': 'core.file_handlers.image_handler.ImageHandler',
+            '.picon': 'core.file_handlers.image_handler.ImageHandler',
 
             # Video
             '.mp4': 'core.file_handlers.video_handler.VideoHandler',
@@ -119,6 +159,17 @@ class Settings(BaseSettings):
             '.tbz2': 'core.file_handlers.archive_handler.ArchiveHandler',
             '.rar': 'core.file_handlers.archive_handler.ArchiveHandler',
             '.7z': 'core.file_handlers.archive_handler.ArchiveHandler',
+            '.xz': 'core.file_handlers.archive_handler.ArchiveHandler',
+            '.iso': 'core.file_handlers.archive_handler.ArchiveHandler',
+            '.dmg': 'core.file_handlers.archive_handler.ArchiveHandler',
+            #misc
+            
+            '.outlook': 'core.file_handlers.misc_handler.MiscHandler',
+            '.mht': 'core.file_handlers.misc_handler.MiscHandler',
+            '.pes': 'core.file_handlers.misc_handler.MiscHandler',
+            '.pfm': 'core.file_handlers.misc_handler.MiscHandler',
+            '.picon': 'core.file_handlers.misc_handler.MiscHandler',
+            '.mpp': 'core.file_handlers.misc_handler.MiscHandler',
 
             # Default fallback
             '.default': 'core.file_handlers.default_handler.DefaultHandler'
@@ -136,12 +187,13 @@ class Settings(BaseSettings):
         # Images (Raster & Vector)
         '.jpg', '.jpeg', '.jpe', '.jfif', '.jps', '.png', '.bmp',
         '.gif', '.webp', '.tif', '.tiff', '.heif', '.heic', '.avif',
-        '.ico', '.dds', '.svg', '.ai', '.eps', '.cdr', '.psd',
+        '.ico', '.dds', '.svg', '.ai', '.eps', '.cdr', '.psd','.picon'
         '.sketch', '.xcf',
         # Other Image Formats
         '.cur', '.dng', '.raw', '.exr', '.hdr', '.pam', '.pbm', '.pcd', '.pcx', '.pgm', '.pict', '.pnm', '.ppm', '.psd', '.ras', '.sgi', '.tga', '.xbm', '.xpm', '.xwd',
         # Audio
         '.mp3', '.wav', '.aac', '.m4a',
+        #video
         '.mp4', '.mkv', '.mov', '.webm',
                 # Ebooks
         '.lit', '.azw', '.azw3', '.fb2',
@@ -152,13 +204,17 @@ class Settings(BaseSettings):
         # Fonts
         '.otf', '.ttf', '.woff', '.woff2', '.eot',
         # Game / Misc files
-        '.pak', '.wad', '.sav', '.mdx', '.rom'
+        '.pak', '.wad', '.sav', '.mdx', '.rom',
+
+        # Archives
+        '.zip', '.rar', '.7z', '.tar', '.gz', '.tgz', '.bz2', '.tbz2', '.xz', '.iso', '.dmg',
 
         '.mp4', '.mkv', '.mov', '.webm', # Video
         '.obj', '.glb', '.gltf', '.stl', '.3ds'
         #config/Data
         '.xsd', '.yaml', '.yml', '.toml', '.ini', '.cfg', '.conf', '.log', '.bak', '.tmp',
-        '.mpp','.msg','eml','.outlook', '.mht', '.picon', '.pes', '.pfm',
+        # Miscellaneous
+        '.mpp','.msg','eml','.outlook', '.mht', '.pes', '.pfm',
 
         #Code & Markup
         '.html', '.xhtml', '.xht', '.mhtml', '.css', '.js', '.php', '.xml', '.json',
