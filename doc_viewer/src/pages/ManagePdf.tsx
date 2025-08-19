@@ -24,6 +24,11 @@ import redoNothingIcon from "@/assets/icons/redo_nothing.svg";
 import { apiService } from '../services/apiService';
 import { cn } from "@/lib/utils";
 import { Checkbox } from '@/components/ui/checkbox';
+import { useRBAC } from "@/components/rbac/RBACProvider";
+import { toast } from "@/hooks/use-toast";
+
+
+
 
 type PageUID = string;
 type PageCardData = {
@@ -63,6 +68,23 @@ const ManagePdf: React.FC = () => {
     const [toastMessage, setToastMessage] = useState("");
     const [newDocumentId, setNewDocumentId] = useState<string | null>(null);
     const [showDeleteAllPagesModal, setShowDeleteAllPagesModal] = useState(false);
+    const { permissions } = useRBAC();
+    const [pendingActions, setPendingActions] = useState<any[]>([]);
+
+
+    useEffect(() => {
+        if (permissions && !permissions.canManagePdf) {
+            // Redirect to home or an "Access Denied" page
+            console.log("/document/${documentId}")
+            navigate('/', { replace: true });
+            toast({
+                title: "Access Denied",
+                description: "You do not have permission to manage PDF files.",
+                variant: "destructive"
+            });
+        }
+    }, [permissions, navigate]);
+
 
     useEffect(() => {
         async function fetchDetails() {
@@ -113,7 +135,22 @@ const ManagePdf: React.FC = () => {
     };
 
     // Core page actions
-    const rotatePage = (uid: PageUID, angle: number) => { saveHistory(); setPages(list => list.map(p => p.uid === uid ? { ...p, rotation: (p.rotation + angle + 360) % 360 } : p)); };
+    const rotatePage = (uid: PageUID, angle: number) => {
+        saveHistory();
+        setPages(list => list.map(p => p.uid === uid ? { ...p, rotation: (p.rotation + angle + 360) % 360 } : p));
+
+        // Record the action:
+        // setPendingActions(actions => [
+        //     ...actions,
+        //     {
+        //         type: "rotate",
+        //         pageUid: uid,
+        //         angle,
+        //         timestamp: Date.now(),
+        //         user: user?.id // provide user info from context if possible
+        //     }
+        // ]);
+    };
     const duplicatePage = (uid: PageUID) => {
         const idx = pages.findIndex(p => p.uid === uid);
         if (idx === -1) return;
@@ -272,6 +309,7 @@ const ManagePdf: React.FC = () => {
         }
     };
     const handleSave = async () => {
+        // Defensive RBAC check before API call
         const recipe = pages.filter(p => !p.isDeleted).map(p => ({
             sourceDocumentId: p.inserted ? p.insertDocId : documentId,
             sourcePageIndex: p.sourceIndex,
