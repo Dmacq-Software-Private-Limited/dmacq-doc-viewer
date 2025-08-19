@@ -30,6 +30,8 @@ import { cn } from "@/lib/utils";
 import { apiService, DocumentDetails } from "../services/apiService";
 import { getViewerType, ViewerType } from '../components/document-viewer/lib/getViewerType'
 import SearchPanel from "@/components/document-viewer/SearchPanel";
+import { useRBAC } from "@/components/rbac/RBACProvider";
+import { toast } from "@/hooks/use-toast";
 
 
 export interface DocumentMetadata {
@@ -57,6 +59,8 @@ const FONT_MIME_TYPES = [
   'application/vnd.ms-fontobject',
 ];
 
+
+
 const DocumentViewerPage = () => {
   const { documentId } = useParams();
   const navigate = useNavigate();
@@ -75,6 +79,37 @@ const DocumentViewerPage = () => {
   const [isSearchPanelOpen, setIsSearchPanelOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState({ count: 0, current: 0 });
+  const { permissions, loading: permissionsLoading } = useRBAC();
+
+  const tabPermissionMap: Record<string, keyof typeof permissions> = {
+    "manage": "canManagePdf",
+    "comments": "canComment",
+    "annotation": "canAnnotate",
+    "audit": "canViewAudit",
+    "metadata": "canViewMetadata",
+    "details": "canViewDetails"
+    // Add more if needed
+  };
+
+// Helper for handling denied clicks:
+  const handlePermissionDenied = (tabId: string) => {
+    let feature = "";
+    switch(tabId) {
+      case "manage": feature = "manage PDF files"; break;
+      case "comments": feature = "comment"; break;
+      case "annotation": feature = "annotate"; break;
+      case "audit": feature = "view audit trail"; break;
+      case "details": feature = "view details"; break;
+      case "metadata": feature = "view metadata"; break
+      default: feature = "access this feature";
+    }
+    toast({
+      title: "Access Denied",
+      description: `You do not have permission to ${feature}.`,
+      variant: "destructive"
+    });
+  };
+
 
   const handleNextSearch = useCallback(() => {
     if (searchResults.count > 0) {
@@ -123,9 +158,9 @@ const DocumentViewerPage = () => {
   };
 
   // Listen for fullscreen changes
-  useEffect(() => { 
+  useEffect(() => {
     const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);  
+      setIsFullscreen(!!document.fullscreenElement);
     };
 
     document.addEventListener("fullscreenchange", handleFullscreenChange);
@@ -338,9 +373,18 @@ const DocumentViewerPage = () => {
     { id: "comments", label: "Comments", icon: commentsIcon },
   ];
 
+
+
   if (getViewerType(documentData) === 'PDF') {
-    panelTabs.splice(2, 0, { id: "manage", label: "Manage PDF", icon: managePdfIcon, onClickIcon: managePdfOnClickIcon } as any);
+    panelTabs.splice(2, 0, {
+      id: "manage",
+      label: "Manage PDF",
+      icon: managePdfIcon,
+      onClickIcon: managePdfOnClickIcon
+    } as any);
   }
+
+
 
 
   // Loading state
@@ -363,7 +407,7 @@ const DocumentViewerPage = () => {
   }
 
   console.log("Final check before render. Total Pages:", totalPages);
-  
+
   const isFont = FONT_MIME_TYPES.includes(documentData.fileType) || documentData.name.match(/\.(otf|ttf|woff|woff2|eot)$/);
 
   return (
@@ -473,7 +517,7 @@ const DocumentViewerPage = () => {
                 maxWidth: "100%",
                 maxHeight: "100%",
                 margin: "0 auto", // Centers the preview
-                
+
               }}
             >
               {isFont ? (
@@ -611,7 +655,7 @@ const DocumentViewerPage = () => {
                 </button>
               </div>
             </div>
-            
+
             {/* Action Buttons */}
             <button
               onClick={handleRotate}
@@ -709,113 +753,134 @@ const DocumentViewerPage = () => {
                 height: "704px",
               }}
             >
-              {panelTabs.map((tab: any) => (
-                <button
-                  key={tab.id}
-                  onClick={() => handlePanelTabClick(tab.id as PanelType)}
-                  className={cn(
-                    "w-12 h-12 gap-8 flex items-center justify-center rounded-md",
-                    activePanel === tab.id && rightSidebarOpen
-                      ? "bg-[#F5F8FF] border-2 border-[#2950DA]"
-                      : "hover:bg-gray-100",
-                  )}
-                >
-                  {tab.id === "audit" && (
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="24"
-                      height="24"
-                      viewBox="0 0 24 24"
-                      fill="none"
+              {panelTabs.map((tab: any) => {
+                // Get the permission key for this tab, if any
+                const permKey = tabPermissionMap[tab.id];
+                // If no permissions object present yet, allow click and show as enabled (avoids UI flicker)
+                const hasPermission = !permKey || (permissions ? permissions[permKey] : true);
+
+                return (
+                    <button
+                        key={tab.id}
+                        //disabled={!hasPermission}
+                        onClick={
+                          hasPermission
+                              ? () => handlePanelTabClick(tab.id as PanelType)
+                              : () => handlePermissionDenied(tab.id)
+                        }
+                        className={cn(
+                            "w-12 h-12 gap-8 flex items-center justify-center rounded-md",
+                            activePanel === tab.id && rightSidebarOpen
+                                ? "bg-[#F5F8FF] border-2 border-[#2950DA]"
+                                : "hover:bg-gray-100"
+                        )}
+                        style={{
+                          opacity: hasPermission ? 1 : 0.5,
+                          cursor: hasPermission ? "pointer" : "not-allowed"
+                        }}
+                        tabIndex={0}
                     >
-                      <path
-                        d="M18.5 17.8V15.5C18.5 15.3667 18.45 15.25 18.35 15.15C18.25 15.05 18.1333 15 18 15C17.8667 15 17.75 15.05 17.65 15.15C17.55 15.25 17.5 15.3667 17.5 15.5V17.8C17.5 17.9333 17.525 18.0583 17.575 18.175C17.625 18.2917 17.7 18.4 17.8 18.5L19.325 20.025C19.425 20.125 19.5417 20.175 19.675 20.175C19.8083 20.175 19.925 20.125 20.025 20.025C20.125 19.925 20.175 19.8083 20.175 19.675C20.175 19.5417 20.125 19.425 20.025 19.325L18.5 17.8ZM5 21C4.45 21 3.97917 20.8042 3.5875 20.4125C3.19583 20.0208 3 19.55 3 19V5C3 4.45 3.19583 3.97917 3.5875 3.5875C3.97917 3.19583 4.45 3 5 3H19C19.55 3 20.0208 3.19583 20.4125 3.5875C20.8042 3.97917 21 4.45 21 5V10C21 10.2833 20.9042 10.5208 20.7125 10.7125C20.5208 10.9042 20.2833 11 20 11C19.7167 11 19.4792 10.9042 19.2875 10.7125C19.0958 10.5208 19 10.2833 19 10V5H5V19H10C10.2833 19 10.5208 19.0958 10.7125 19.2875C10.9042 19.4792 11 19.7167 11 20C11 20.2833 10.9042 20.5208 10.7125 20.7125C10.5208 20.9042 10.2833 21 10 21H5ZM5 18V19V5V11.075V11V18ZM7 16C7 16.2833 7.09583 16.5208 7.2875 16.7125C7.47917 16.9042 7.71667 17 8 17H10.075C10.3583 17 10.5958 16.9042 10.7875 16.7125C10.9792 16.5208 11.075 16.2833 11.075 16C11.075 15.7167 10.9792 15.4792 10.7875 15.2875C10.5958 15.0958 10.3583 15 10.075 15H8C7.71667 15 7.47917 15.0958 7.2875 15.2875C7.09583 15.4792 7 15.7167 7 16ZM7 12C7 12.2833 7.09583 12.5208 7.2875 12.7125C7.47917 12.9042 7.71667 13 8 13H13C13.2833 13 13.5208 12.9042 13.7125 12.7125C13.9042 12.5208 14 12.2833 14 12C14 11.7167 13.9042 11.4792 13.7125 11.2875C13.5208 11.0958 13.2833 11 13 11H8C7.71667 11 7.47917 11.0958 7.2875 11.2875C7.09583 11.4792 7 11.7167 7 12ZM7 8C7 8.28333 7.09583 8.52083 7.2875 8.7125C7.47917 8.90417 7.71667 9 8 9H16C16.2833 9 16.5208 8.90417 16.7125 8.7125C16.9042 8.52083 17 8.28333 17 8C17 7.71667 16.9042 7.47917 16.7125 7.2875C16.5208 7.09583 16.2833 7 16 7H8C7.71667 7 7.47917 7.09583 7.2875 7.2875C7.09583 7.47917 7 7.71667 7 8ZM18 23C16.6167 23 15.4375 22.5125 14.4625 21.5375C13.4875 20.5625 13 19.3833 13 18C13 16.6167 13.4875 15.4375 14.4625 14.4625C15.4375 13.4875 16.6167 13 18 13C19.3833 13 20.5625 13.4875 21.5375 14.4625C22.5125 15.4375 23 16.6167 23 18C23 19.3833 22.5125 20.5625 21.5375 21.5375C20.5625 22.5125 19.3833 23 18 23Z"
-                        fill={
-                          activePanel === tab.id && rightSidebarOpen
-                            ? "#2950DA"
-                            : "#40566D"
-                        }
-                      />
-                    </svg>
-                  )}
-                  {tab.id === "details" && (
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="20"
-                      height="16"
-                      viewBox="0 0 20 16"
-                      fill="none"
-                    >
-                      <path
-                        d="M2.25 6.5C1.42 6.5 0.75 7.17 0.75 8C0.75 8.83 1.42 9.5 2.25 9.5C3.08 9.5 3.75 8.83 3.75 8C3.75 7.17 3.08 6.5 2.25 6.5ZM2.25 0.5C1.42 0.5 0.75 1.17 0.75 2C0.75 2.83 1.42 3.5 2.25 3.5C3.08 3.5 3.75 2.83 3.75 2C3.75 1.17 3.08 0.5 2.25 0.5ZM2.25 12.5C1.42 12.5 0.75 13.18 0.75 14C0.75 14.82 1.43 15.5 2.25 15.5C3.07 15.5 3.75 14.82 3.75 14C3.75 13.18 3.08 12.5 2.25 12.5ZM6.25 15H18.25C18.8 15 19.25 14.55 19.25 14C19.25 13.45 18.8 13 18.25 13H6.25C5.7 13 5.25 13.45 5.25 14C5.25 14.55 5.7 15 6.25 15ZM6.25 9H18.25C18.8 9 19.25 8.55 19.25 8C19.25 7.45 18.8 7 18.25 7H6.25C5.7 7 5.25 7.45 5.25 8C5.25 8.55 5.7 9 6.25 9ZM5.25 2C5.25 2.55 5.7 3 6.25 3H18.25C18.8 3 19.25 2.55 19.25 2C19.25 1.45 18.8 1 18.25 1H6.25C5.7 1 5.25 1.45 5.25 2Z"
-                        fill={
-                          activePanel === tab.id && rightSidebarOpen
-                            ? "#2950DA"
-                            : "#40566D"
-                        }
-                      />
-                    </svg>
-                  )}
-                  {tab.id === "metadata" && (
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="24"
-                      height="24"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                    >
-                      <path
-                        d="M14 2H6C4.9 2 4.01 2.9 4.01 4L4 20C4 21.1 4.89 22 5.99 22H18C19.1 22 20 21.1 20 20V8L14 2ZM6 20V4H13V9H18V20H6Z"
-                        fill={
-                          activePanel === tab.id && rightSidebarOpen
-                            ? "#2950DA"
-                            : "#40566D"
-                        }
-                      />
-                      <path
-                        d="M10 14.9908C10 14.694 10.385 14.5775 10.5496 14.8244L11.7504 16.6256C11.8691 16.8037 12.1309 16.8037 12.2496 16.6256L13.4504 14.8244C13.615 14.5775 14 14.694 14 14.9908V17.7C14 17.8657 14.1343 18 14.3 18H15.7C15.8657 18 16 17.8657 16 17.7V11.3C16 11.1343 15.8657 11 15.7 11H14.1606C14.0602 11 13.9666 11.0501 13.9109 11.1336L12.2496 13.6256C12.1309 13.8037 11.8691 13.8037 11.7504 13.6256L10.0891 11.1336C10.0334 11.0501 9.93975 11 9.83944 11H8.3C8.13431 11 8 11.1343 8 11.3V17.7C8 17.8657 8.13431 18 8.3 18H9.7C9.86569 18 10 17.8657 10 17.7V14.9908Z"
-                        fill={
-                          activePanel === tab.id && rightSidebarOpen
-                            ? "#2950DA"
-                            : "#40566D"
-                        }
-                      />
-                    </svg>
-                  )}
-                  {tab.id === "comments" && (
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="24"
-                      height="24"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                    >
-                      <path
-                        d="M20 2H4C2.9 2 2 2.9 2 4V22L6 18H20C21.1 18 22 17.1 22 16V4C22 2.9 21.1 2 20 2ZM20 16H6L4 18V4H20V16ZM7 9H9V11H7V9ZM11 9H13V11H11V9ZM15 9H17V11H15V9Z"
-                        fill={
-                          activePanel === tab.id && rightSidebarOpen
-                            ? "#2950DA"
-                            : "#40566D"
-                        }
-                      />
-                    </svg>
-                  )}
-                  {tab.id === "annotation" && (
-                    <img
-                      src={tab.icon}
-                      alt={tab.label}
-                      className="w-6 h-6"
-                    />
-                  )}
-                  {tab.id === "manage" && (
-                    <img
-                      src={activePanel === tab.id && rightSidebarOpen ? tab.onClickIcon : tab.icon}
-                      alt={tab.label}
-                      className="w-6 h-6"
-                    />
-                  )}
-                </button>
-              ))}
+                      {tab.id === "audit" && (
+                          <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="24"
+                              height="24"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                          >
+                            <path
+                                d="M18.5 17.8V15.5C18.5 15.3667 18.45 15.25 18.35 15.15C18.25 15.05 18.1333 15 18 15C17.8667 15 17.75 15.05 17.65 15.15C17.55 15.25 17.5 15.3667 17.5 15.5V17.8C17.5 17.9333 17.525 18.0583 17.575 18.175C17.625 18.2917 17.7 18.4 17.8 18.5L19.325 20.025C19.425 20.125 19.5417 20.175 19.675 20.175C19.8083 20.175 19.925 20.125 20.025 20.025C20.125 19.925 20.175 19.8083 20.175 19.675C20.175 19.5417 20.125 19.425 20.025 19.325L18.5 17.8ZM5 21C4.45 21 3.97917 20.8042 3.5875 20.4125C3.19583 20.0208 3 19.55 3 19V5C3 4.45 3.19583 3.97917 3.5875 3.5875C3.97917 3.19583 4.45 3 5 3H19C19.55 3 20.0208 3.19583 20.4125 3.5875C20.8042 3.97917 21 4.45 21 5V10C21 10.2833 20.9042 10.5208 20.7125 10.7125C20.5208 10.9042 20.2833 11 20 11C19.7167 11 19.4792 10.9042 19.2875 10.7125C19.0958 10.5208 19 10.2833 19 10V5H5V19H10C10.2833 19 10.5208 19.0958 10.7125 19.2875C10.9042 19.4792 11 19.7167 11 20C11 20.2833 10.9042 20.5208 10.7125 20.7125C10.5208 20.9042 10.2833 21 10 21H5ZM5 18V19V5V11.075V11V18ZM7 16C7 16.2833 7.09583 16.5208 7.2875 16.7125C7.47917 16.9042 7.71667 17 8 17H10.075C10.3583 17 10.5958 16.9042 10.7875 16.7125C10.9792 16.5208 11.075 16.2833 11.075 16C11.075 15.7167 10.9792 15.4792 10.7875 15.2875C10.5958 15.0958 10.3583 15 10.075 15H8C7.71667 15 7.47917 15.0958 7.2875 15.2875C7.09583 15.4792 7 15.7167 7 16ZM7 12C7 12.2833 7.09583 12.5208 7.2875 12.7125C7.47917 12.9042 7.71667 13 8 13H13C13.2833 13 13.5208 12.9042 13.7125 12.7125C13.9042 12.5208 14 12.2833 14 12C14 11.7167 13.9042 11.4792 13.7125 11.2875C13.5208 11.0958 13.2833 11 13 11H8C7.71667 11 7.47917 11.0958 7.2875 11.2875C7.09583 11.4792 7 11.7167 7 12ZM7 8C7 8.28333 7.09583 8.52083 7.2875 8.7125C7.47917 8.90417 7.71667 9 8 9H16C16.2833 9 16.5208 8.90417 16.7125 8.7125C16.9042 8.52083 17 8.28333 17 8C17 7.71667 16.9042 7.47917 16.7125 7.2875C16.5208 7.09583 16.2833 7 16 7H8C7.71667 7 7.47917 7.09583 7.2875 7.2875C7.09583 7.47917 7 7.71667 7 8ZM18 23C16.6167 23 15.4375 22.5125 14.4625 21.5375C13.4875 20.5625 13 19.3833 13 18C13 16.6167 13.4875 15.4375 14.4625 14.4625C15.4375 13.4875 16.6167 13 18 13C19.3833 13 20.5625 13.4875 21.5375 14.4625C22.5125 15.4375 23 16.6167 23 18C23 19.3833 22.5125 20.5625 21.5375 21.5375C20.5625 22.5125 19.3833 23 18 23Z"
+                                fill={
+                                  activePanel === tab.id && rightSidebarOpen
+                                      ? "#2950DA"
+                                      : "#40566D"
+                                }
+                            />
+                          </svg>
+                          // ... your audit SVG ...
+                      )}
+                      {tab.id === "details" && (
+                          <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="20"
+                              height="16"
+                              viewBox="0 0 20 16"
+                              fill="none"
+                          >
+                            <path
+                                d="M2.25 6.5C1.42 6.5 0.75 7.17 0.75 8C0.75 8.83 1.42 9.5 2.25 9.5C3.08 9.5 3.75 8.83 3.75 8C3.75 7.17 3.08 6.5 2.25 6.5ZM2.25 0.5C1.42 0.5 0.75 1.17 0.75 2C0.75 2.83 1.42 3.5 2.25 3.5C3.08 3.5 3.75 2.83 3.75 2C3.75 1.17 3.08 0.5 2.25 0.5ZM2.25 12.5C1.42 12.5 0.75 13.18 0.75 14C0.75 14.82 1.43 15.5 2.25 15.5C3.07 15.5 3.75 14.82 3.75 14C3.75 13.18 3.08 12.5 2.25 12.5ZM6.25 15H18.25C18.8 15 19.25 14.55 19.25 14C19.25 13.45 18.8 13 18.25 13H6.25C5.7 13 5.25 13.45 5.25 14C5.25 14.55 5.7 15 6.25 15ZM6.25 9H18.25C18.8 9 19.25 8.55 19.25 8C19.25 7.45 18.8 7 18.25 7H6.25C5.7 7 5.25 7.45 5.25 8C5.25 8.55 5.7 9 6.25 9ZM5.25 2C5.25 2.55 5.7 3 6.25 3H18.25C18.8 3 19.25 2.55 19.25 2C19.25 1.45 18.8 1 18.25 1H6.25C5.7 1 5.25 1.45 5.25 2Z"
+                                fill={
+                                  activePanel === tab.id && rightSidebarOpen
+                                      ? "#2950DA"
+                                      : "#40566D"
+                                }
+                            />
+                          </svg>
+                          // ... your details SVG ...
+                      )}
+                      {tab.id === "metadata" && (
+                          <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="24"
+                              height="24"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                          >
+                            <path
+                                d="M14 2H6C4.9 2 4.01 2.9 4.01 4L4 20C4 21.1 4.89 22 5.99 22H18C19.1 22 20 21.1 20 20V8L14 2ZM6 20V4H13V9H18V20H6Z"
+                                fill={
+                                  activePanel === tab.id && rightSidebarOpen
+                                      ? "#2950DA"
+                                      : "#40566D"
+                                }
+                            />
+                            <path
+                                d="M10 14.9908C10 14.694 10.385 14.5775 10.5496 14.8244L11.7504 16.6256C11.8691 16.8037 12.1309 16.8037 12.2496 16.6256L13.4504 14.8244C13.615 14.5775 14 14.694 14 14.9908V17.7C14 17.8657 14.1343 18 14.3 18H15.7C15.8657 18 16 17.8657 16 17.7V11.3C16 11.1343 15.8657 11 15.7 11H14.1606C14.0602 11 13.9666 11.0501 13.9109 11.1336L12.2496 13.6256C12.1309 13.8037 11.8691 13.8037 11.7504 13.6256L10.0891 11.1336C10.0334 11.0501 9.93975 11 9.83944 11H8.3C8.13431 11 8 11.1343 8 11.3V17.7C8 17.8657 8.13431 18 8.3 18H9.7C9.86569 18 10 17.8657 10 17.7V14.9908Z"
+                                fill={
+                                  activePanel === tab.id && rightSidebarOpen
+                                      ? "#2950DA"
+                                      : "#40566D"
+                                }
+                            />
+                          </svg>
+                          // ... your metadata SVG ...
+                      )}
+                      {tab.id === "comments" && (
+                          <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="24"
+                              height="24"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                          >
+                            <path
+                                d="M20 2H4C2.9 2 2 2.9 2 4V22L6 18H20C21.1 18 22 17.1 22 16V4C22 2.9 21.1 2 20 2ZM20 16H6L4 18V4H20V16ZM7 9H9V11H7V9ZM11 9H13V11H11V9ZM15 9H17V11H15V9Z"
+                                fill={
+                                  activePanel === tab.id && rightSidebarOpen
+                                      ? "#2950DA"
+                                      : "#40566D"
+                                }
+                            />
+                          </svg>
+                          // ... your comments SVG ...
+                      )}
+                      {tab.id === "annotation" && (
+                          <img
+                              src={tab.icon}
+                              alt={tab.label}
+                              className="w-6 h-6"
+                          />
+                      )}
+                      {tab.id === "manage" && (
+                          <img
+                              src={activePanel === tab.id && rightSidebarOpen ? tab.onClickIcon : tab.icon}
+                              alt={tab.label}
+                              className="w-6 h-6"
+                          />
+                      )}
+                    </button>
+                );
+              })}
             </div>
           </div>
         )}
