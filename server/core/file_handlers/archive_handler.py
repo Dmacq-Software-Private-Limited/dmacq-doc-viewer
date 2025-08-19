@@ -7,6 +7,7 @@ import py7zr
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 import shutil
+import logging
 
 from .base_handler import FileHandler
 from models.document import DocumentMetadata
@@ -83,9 +84,22 @@ class ArchiveHandler(FileHandler):
                     rar_ref.extractall(output_dir)
                 return True
 
+            elif file_ext == '.xz':
+                with tarfile.open(file_path, 'r:xz') as tar_ref:
+                    tar_ref.extractall(output_dir)
+                return True
+
             elif file_ext == '.7z':
                 with py7zr.SevenZipFile(file_path, mode='r') as zip_ref:
                     zip_ref.extractall(output_dir)
+                return True
+
+            elif file_ext in ['.iso', '.dmg']:
+                cmd = ["7z", "x", f"-o{output_dir}", file_path, "-y"]
+                return_code, _, stderr = await command_utils.run_command(cmd)
+                if return_code != 0:
+                    print(f"Error extracting with 7z: {stderr}")
+                    return False
                 return True
 
         except Exception as e:
@@ -103,22 +117,44 @@ class ArchiveHandler(FileHandler):
             if file_ext == '.zip':
                 with zipfile.ZipFile(file_path, 'r') as zip_ref:
                     contents = zip_ref.namelist()
+            
+            elif file_ext == '.tar':
+                with tarfile.open(file_path, 'r:') as tar_ref:
+                    contents = tar_ref.getnames()
 
-            elif file_ext == '.tar' or file_ext == '.gz' or file_ext == '.tgz' or \
-                    file_ext == '.bz2' or file_ext == '.tbz2':
-                with tarfile.open(file_path, 'r') as tar_ref:
+            elif file_ext in ['.gz', '.tgz']:
+                with tarfile.open(file_path, 'r:gz') as tar_ref:
+                    contents = tar_ref.getnames()
+
+            elif file_ext in ['.bz2', '.tbz2']:
+                with tarfile.open(file_path, 'r:bz2') as tar_ref:
                     contents = tar_ref.getnames()
 
             elif file_ext == '.rar':
                 with rarfile.RarFile(file_path, 'r') as rar_ref:
-                    contents = [f.filename for f in rar_ref.infolist()]
+                    contents = rar_ref.namelist()
+
+            elif file_ext == '.xz':
+                with tarfile.open(file_path, 'r:xz') as tar_ref:
+                    contents = tar_ref.getnames()
 
             elif file_ext == '.7z':
                 with py7zr.SevenZipFile(file_path, mode='r') as zip_ref:
-                    contents = [f.filename for f in zip_ref.getnames()]
+                    contents = zip_ref.getnames()
 
-        except Exception:
-            pass
+            elif file_ext in ['.iso', '.dmg']:
+                cmd = ["7z", "l", file_path]
+                return_code, stdout, stderr = await command_utils.run_command(cmd)
+                if return_code == 0:
+                    # Complex parsing of 7z output might be needed here.
+                    # This is a simplified version.
+                    contents = [line for line in stdout.split('\n') if
+                                "Name" not in line and "----" not in line and line.strip()]
+                else:
+                    logging.error(f"Error listing with 7z: {stderr}")
+
+        except Exception as e:
+            logging.error(f"Failed to list contents for {file_path}: {e}")
 
         return contents
 
@@ -126,3 +162,7 @@ class ArchiveHandler(FileHandler):
         """Get number of files in archive"""
         contents = await self.list_archive_contents(file_path)
         return len(contents)
+
+    async def get_page_as_image(self, source_path: str, page_number: int, doc_id: str) -> Optional[str]:
+        """Archives do not have pages, so this method is not applicable."""
+        return None

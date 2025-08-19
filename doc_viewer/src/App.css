@@ -72,3 +72,8 @@ html, body, #root {
 .read-the-docs {
   color: #888;
 }
+
+mark {
+    background-color: #F4ED9C;
+    color: black;
+}

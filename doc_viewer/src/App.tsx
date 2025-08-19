@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import DocumentViewerPage from "./pages/DocumentViewer";
 import NotFound from "./pages/NotFound";
+import ManagePdf from "./pages/ManagePdf.tsx"
 
 const queryClient = new QueryClient();
 
@@ -19,6 +20,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/document/:documentId" element={<DocumentViewerPage />} />
+          <Route path="/document/:documentId/manage" element={<ManagePdf />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

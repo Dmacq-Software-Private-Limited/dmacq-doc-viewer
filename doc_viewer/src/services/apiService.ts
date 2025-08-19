@@ -1,11 +1,18 @@
-//const API_BASE_URL = 'http://13.203.247.119:8001/api'
-
 //const API_BASE_URL = 'http://localhost:8001/api'
 
 // const API_BASE_URL = 'http://13.203.247.119:8001/api';
 // const API_BASE_URL = 'http://192.168.0.93:8001/api';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
+export interface OrganizePageOp {
+  sourceDocumentId: string;
+  sourcePageIndex: number;
+  rotation?: number;
+}
+
+export interface OrganizePayload {
+  recipe: OrganizePageOp[];
+}
 
 
 export interface UploadedDocument {
@@ -69,6 +76,21 @@ export interface Annotation {
 }
 
 class ApiService {
+
+  async organizePdf(documentId: string, recipe: OrganizePageOp[]): Promise<UploadedDocument> {
+    const response = await fetch(`${API_BASE_URL}/documents/${documentId}/organize`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ recipe }),
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(text || "Failed to save PDF changes!");
+    }
+    return await response.json();
+  }
+
   async uploadDocument(file: File): Promise<UploadedDocument> {
     const formData = new FormData();
     formData.append('file', file);
@@ -130,6 +152,16 @@ class ApiService {
 
   getDocumentDownloadUrl(documentId: string): string {
     return `${API_BASE_URL}/documents/${documentId}/download`;
+  }
+
+  async deleteDocument(documentId: string): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/documents/${documentId}`, {
+      method: 'DELETE',
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to delete document');
+    }
   }
 
   getThumbnailUrl(documentId: string): string {
@@ -199,6 +231,14 @@ class ApiService {
   async getCodeText(documentId: string): Promise<{ code: string }> {
     const response = await fetch(`${API_BASE_URL}/documents/${documentId}/code`);
     if (!response.ok) throw new Error("Failed to fetch code text");
+    return response.json();
+  }
+
+  async getArchiveFileList(documentId: string): Promise<{ file_list: string[] }> {
+    const response = await fetch(`${API_BASE_URL}/documents/${documentId}/list_files`);
+    if (!response.ok) {
+      throw new Error("Failed to fetch archive file list");
+    }
     return response.json();
   }
 }

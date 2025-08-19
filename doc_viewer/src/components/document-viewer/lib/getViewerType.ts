@@ -9,6 +9,7 @@ export type ViewerType =
     | 'COMIC'
     | 'DB'
     | 'FB2'
+    | 'ARCHIVE'
     | 'UNSUPPORTED_EBOOK'
     | 'UNSUPPORTED';
 
@@ -29,7 +30,10 @@ export const getViewerType = (document: Document): ViewerType => {
         return 'MODEL_3D';
     }
 
-    if (fileType.startsWith('image/') || ext === 'picon') {
+    if (fileType.startsWith('image/') || ['jpg', 'jpeg', 'jpe', 'jfif', 'jps', 'png', 'bmp',
+        'gif', 'webp', 'tif', 'tiff', 'heif', 'heic', 'avif',
+        'ico', 'dds', 'svg', 'ai', 'eps', 'cdr', 'psd',
+        'sketch', 'xcf','cur', 'dng', 'raw', 'exr', 'hdr', 'pam', 'pbm', 'pcd', 'pcx', 'pgm', 'pict', 'pnm', 'ppm', 'psd', 'ras', 'sgi', 'tga', 'xbm', 'xpm', 'xwd'].includes(ext)) {
         return 'IMAGE';
     }
 
@@ -49,8 +53,12 @@ export const getViewerType = (document: Document): ViewerType => {
         return 'UNSUPPORTED_EBOOK';
     }
 
+    if (['zip', 'rar', '7z', 'tar', 'gz', 'tgz', 'bz2', 'tbz2', 'xz', 'iso', 'dmg'].includes(ext)) {
+        return 'ARCHIVE';
+    }
+
     // Default to PDF for common document types that get converted
-    if (fileType === 'application/pdf' || ['doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx'].includes(ext)) {
+    if (fileType === 'application/pdf' || ['doc', 'docx', 'ppt', 'pptx','ppsx','odp','fodp','sxi','pps','ods','fods', 'xls', 'xlsx', 'csv','xlsb'].includes(ext)) {
         return 'PDF';
     }
 

@@ -14,6 +14,7 @@ import ComicViewer from './viewers/ComicViewer';   // Existing component
 import FB2Viewer from './viewers/FB2Viewer';     // Existing component
 import ImageViewer from './viewers/ImageViewer';
 import MhtViewer from './viewers/MhtViewer';
+import ArchiveViewer from './viewers/ArchiveViewer';
 
 // Define the main props interface
 export interface DocumentViewerProps {
@@ -32,6 +33,10 @@ export interface DocumentViewerProps {
     zoomLevel: number;
     rotation: number;
     isFullscreen: boolean;
+    searchQuery?: string;
+    searchOptions?: { matchCase: boolean; wholeWord: boolean };
+    onSearchResults?: (results: { count: number; current: number }) => void;
+    searchResult?: { count: number; current: number };
 }
 
 const UnsupportedViewer = ({ message }: { message: string }) => (
@@ -44,12 +49,15 @@ const DocumentViewer: React.FC<DocumentViewerProps> = (props) => {
     const { document } = props;
     const viewerType = getViewerType(document);
 
+    console.log("Document:", document);
+    console.log("Viewer Type:", viewerType);
+
     switch (viewerType) {
         case 'PDF':
             return <PdfViewer {...props} />;
 
         case 'TEXT':
-            return <TextViewer document={document} />;
+            return <TextViewer {...props} />;
 
         case 'IMAGE':
             return <ImageViewer document={document} />;
@@ -67,7 +75,10 @@ const DocumentViewer: React.FC<DocumentViewerProps> = (props) => {
             return <DBViewer documentUrl={document.url} />;
 
         case 'FB2':
-            return <FB2Viewer documentUrl={document.url} />;
+            return <FB2Viewer {...props} />;
+
+        case 'ARCHIVE':
+            return <ArchiveViewer {...props} />;
 
         case 'UNSUPPORTED_EBOOK':
             if (document.name.toLowerCase().endsWith('.mht')) {
