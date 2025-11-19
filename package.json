@@ -1,4 +1,7 @@
 {
+  "scripts": {
+    "dev": "cd doc_viewer && npm run dev"
+  },
   "dependencies": {
     "framer-motion": "^12.23.12"
   }
