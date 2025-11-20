@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import DocumentHeader from "@/components/document-viewer/DocumentHeader";
 import DocumentViewer from "@/components/document-viewer/DocumentViewer";
@@ -8,12 +8,16 @@ import DetailsPanel from "@/components/document-viewer/DetailsPanel";
 import AuditTrailPanel from "@/components/document-viewer/AuditTrailPanel";
 import CommentsPanel from "@/components/document-viewer/CommentsPanel";
 import AnnotationPanel from "@/components/document-viewer/AnnotationPanel";
+import VersionHistoryPanel from "@/components/document-viewer/VersionHistoryPanel";
+import SignaturePanel from "@/components/document-viewer/SignaturePanel";
 import FontViewer from "@/components/document-viewer/FontViewer";
 import metadataIcon from "@/assets/icons/Icon=Metadata.svg";
 import commentsIcon from "@/assets/icons/Icon=Comment.svg";
-import auditIcon from "@/assets/icons/Icon=Audit Log.svg";
+import auditIcon from "@/assets/icons/Icon=Audit Log.svg"
 import detailsIcon from "@/assets/icons/Icon=Details.svg";
+import signatureIcon from "@/assets/icons/sign.svg";
 import annotationIcon from "@/assets/icons/AnnotationIcon.svg";
+import versionHistoryIcon from "@/assets/icons/Icon=version-history.svg";
 import managePdfIcon from "@/assets/icons/ManagePdf.svg";
 import managePdfOnClickIcon from "@/assets/icons/ManagePdfonclick.svg";
 import HighlighterIcon from "@/assets/icons/Annotation-Highlighter.svg";
@@ -49,7 +53,9 @@ export interface DocumentMetadata {
   [key: string]: unknown;
 }
 
-type PanelType = "metadata" | "details" | "audit" | "comments" | "annotation" | "manage";
+
+type PanelType = "metadata" | "details" | "audit" | "comments" | "annotation" | "manage" | "versionHistory" | "signature";
+
 
 const FONT_MIME_TYPES = [
   'font/otf',
@@ -87,7 +93,8 @@ const DocumentViewerPage = () => {
     "annotation": "canAnnotate",
     "audit": "canViewAudit",
     "metadata": "canViewMetadata",
-    "details": "canViewDetails"
+    "details": "canViewDetails",
+    "signature": "canSign"
     // Add more if needed
   };
 
@@ -238,6 +245,12 @@ const DocumentViewerPage = () => {
       }
     : fallbackDocument;
 
+  const documentForViewer = useMemo(() => ({
+    ...documentData,
+    url: apiService.getDocumentPreviewUrl(documentData.id),
+    convertedUrl: apiService.getDocumentPreviewUrl(documentData.id),
+  }), [documentData]);
+
   const handleClose = () => {
     navigate("/");
   };
@@ -371,6 +384,8 @@ const DocumentViewerPage = () => {
     { id: "annotation", label: "Annotation", icon: annotationIcon },
     { id: "audit", label: "Audit Trail", icon: auditIcon },
     { id: "comments", label: "Comments", icon: commentsIcon },
+    { id: "versionHistory", label: "Version History", icon: versionHistoryIcon },
+    { id: "signature", label: "Signature", icon: signatureIcon },
   ];
 
 
@@ -422,7 +437,6 @@ const DocumentViewerPage = () => {
       {!isFullscreen && (
           <>
             <DocumentHeader doc={documentData} onClose={handleClose} />
-
           </>
       )}
 
@@ -524,11 +538,7 @@ const DocumentViewerPage = () => {
                 <FontViewer document={documentDetails!} />
               ) : (
                 <DocumentViewer
-                  document={{
-                    ...documentData,
-                    url: apiService.getDocumentPreviewUrl(documentData.id),
-                    convertedUrl: apiService.getDocumentPreviewUrl(documentData.id),
-                  }}
+                  document={documentForViewer}
                   currentPage={currentPage}
                   onPageChange={setCurrentPage}
                   zoomLevel={zoomLevel / 100}
@@ -711,13 +721,12 @@ const DocumentViewerPage = () => {
           <div className="hidden lg:flex h-full">
             {rightSidebarOpen && (
               <div
-                className="bg-white border-r border-gray-200 overflow-y-auto w-[320px] no-scrollbar px-5"
+                className="bg-white border-r border-gray-200 overflow-y-auto no-scrollbar px-5"
                 style={{
                   display: "flex",
+                  width: "398px",
                   flexDirection: "column",
                   alignItems: "flex-start",
-                  gap: "20px",
-                  flex: "1 0 0",
                   alignSelf: "stretch",
                 }}
               >
@@ -738,6 +747,11 @@ const DocumentViewerPage = () => {
                   <CommentsPanel documentId={documentId} />
                 )}
                 {activePanel === "annotation" && <AnnotationPanel />}
+                
+                {activePanel === "versionHistory" && <VersionHistoryPanel />}
+
+                {activePanel === "signature" && <SignaturePanel documentId={documentId!} />}
+
               </div>
             )}
             <div
@@ -877,6 +891,35 @@ const DocumentViewerPage = () => {
                               alt={tab.label}
                               className="w-6 h-6"
                           />
+                      )}
+                      {tab.id === "versionHistory" && (
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                          <path d="M18.5 17.8V15.5C18.5 15.3667 18.45 15.25 18.35 15.15C18.25 15.05 18.1333 15 18 15C17.8667 15 17.75 15.05 17.65 15.15C17.55 15.25 17.5 15.3667 17.5 15.5V17.8C17.5 17.9333 17.525 18.0583 17.575 18.175C17.625 18.2917 17.7 18.4 17.8 18.5L19.325 20.025C19.425 20.125 19.5417 20.175 19.675 20.175C19.8083 20.175 19.925 20.125 20.025 20.025C20.125 19.925 20.175 19.8083 20.175 19.675C20.175 19.5417 20.125 19.425 20.025 19.325L18.5 17.8ZM5 21C4.45 21 3.97917 20.8042 3.5875 20.4125C3.19583 20.0208 3 19.55 3 19V5C3 4.45 3.19583 3.97917 3.5875 3.5875C3.97917 3.19583 4.45 3 5 3H19C19.55 3 20.0208 3.19583 20.4125 3.5875C20.8042 3.97917 21 4.45 21 5V10C21 10.2833 20.9042 10.5208 20.7125 10.7125C20.5208 10.9042 20.2833 11 20 11C19.7167 11 19.4792 10.9042 19.2875 10.7125C19.0958 10.5208 19 10.2833 19 10V5H5V19H10C10.2833 19 10.5208 19.0958 10.7125 19.2875C10.9042 19.4792 11 19.7167 11 20C11 20.2833 10.9042 20.5208 10.7125 20.7125C10.5208 20.9042 10.2833 21 10 21H5ZM5 18V19V5V11.075V11V18ZM7 16C7 16.2833 7.09583 16.5208 7.2875 16.7125C7.47917 16.9042 7.71667 17 8 17H10.075C10.3583 17 10.5958 16.9042 10.7875 16.7125C10.9792 16.5208 11.075 16.2833 11.075 16C11.075 15.7167 10.9792 15.4792 10.7875 15.2875C10.5958 15.0958 10.3583 15 10.075 15H8C7.71667 15 7.47917 15.0958 7.2875 15.2875C7.09583 15.4792 7 15.7167 7 16ZM7 12C7 12.2833 7.09583 12.5208 7.2875 12.7125C7.47917 12.9042 7.71667 13 8 13H13C13.2833 13 13.5208 12.9042 13.7125 12.7125C13.9042 12.5208 14 12.2833 14 12C14 11.7167 13.9042 11.4792 13.7125 11.2875C13.5208 11.0958 13.2833 11 13 11H8C7.71667 11 7.47917 11.0958 7.2875 11.2875C7.09583 11.4792 7 11.7167 7 12ZM7 8C7 8.28333 7.09583 8.52083 7.2875 8.7125C7.47917 8.90417 7.71667 9 8 9H16C16.2833 9 16.5208 8.90417 16.7125 8.7125C16.9042 8.52083 17 8.28333 17 8C17 7.71667 16.9042 7.47917 16.7125 7.2875C16.5208 7.09583 16.2833 7 16 7H8C7.71667 7 7.47917 7.09583 7.2875 7.2875C7.09583 7.47917 7 7.71667 7 8ZM18 23C16.6167 23 15.4375 22.5125 14.4625 21.5375C13.4875 20.5625 13 19.3833 13 18C13 16.6167 13.4875 15.4375 14.4625 14.4625C15.4375 13.4875 16.6167 13 18 13C19.3833 13 20.5625 13.4875 21.5375 14.4625C22.5125 15.4375 23 16.6167 23 18C23 19.3833 22.5125 20.5625 21.5375 21.5375C20.5625 22.5125 19.3833 23 18 23Z"
+                          fill={
+                              activePanel === tab.id && rightSidebarOpen
+                                ? "#2950DA"
+                                : "#40566D"
+                            }
+                          />
+                        </svg>
+                      )}
+                      {tab.id === "signature" && (
+                          <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="21"
+                              height="19"
+                              viewBox="0 0 21 19"
+                              fill="none"
+                          >
+                            <path d="M12.0719 9.725C13.2885 8.825 14.2385 7.8375 14.9219 6.7625C15.6052 5.6875 15.9469 4.61667 15.9469 3.55C15.9469 3.01667 15.8594 2.625 15.6844 2.375C15.5094 2.125 15.2719 2 14.9719 2C14.1885 2 13.4969 2.6625 12.8969 3.9875C12.2969 5.3125 11.9969 6.80833 11.9969 8.475C11.9969 8.70833 12.001 8.92917 12.0094 9.1375C12.0177 9.34583 12.0385 9.54167 12.0719 9.725ZM2.09688 14.3C1.91354 14.4833 1.68021 14.575 1.39688 14.575C1.11354 14.575 0.880208 14.4833 0.696875 14.3C0.513542 14.1167 0.421875 13.8833 0.421875 13.6C0.421875 13.3167 0.513542 13.0833 0.696875 12.9L1.59688 12L0.696875 11.1C0.513542 10.9167 0.421875 10.6833 0.421875 10.4C0.421875 10.1167 0.513542 9.88333 0.696875 9.7C0.880208 9.51667 1.11354 9.425 1.39688 9.425C1.68021 9.425 1.91354 9.51667 2.09688 9.7L2.99688 10.6L3.89688 9.7C4.08021 9.51667 4.31354 9.425 4.59688 9.425C4.88021 9.425 5.11354 9.51667 5.29688 9.7C5.48021 9.88333 5.57188 10.1167 5.57188 10.4C5.57188 10.6833 5.48021 10.9167 5.29688 11.1L4.39688 12L5.29688 12.9C5.48021 13.0833 5.57188 13.3167 5.57188 13.6C5.57188 13.8833 5.48021 14.1167 5.29688 14.3C5.11354 14.4833 4.88021 14.575 4.59688 14.575C4.31354 14.575 4.08021 14.4833 3.89688 14.3L2.99688 13.4L2.09688 14.3ZM13.4469 14C12.9469 14 12.4885 13.9042 12.0719 13.7125C11.6552 13.5208 11.2969 13.2083 10.9969 12.775C10.7302 12.9083 10.4552 13.0417 10.1719 13.175L9.32188 13.575C9.05521 13.6917 8.79271 13.6958 8.53438 13.5875C8.27604 13.4792 8.09688 13.2917 7.99688 13.025C7.89687 12.7583 7.90938 12.5 8.03438 12.25C8.15938 12 8.35521 11.8167 8.62187 11.7C8.90521 11.5667 9.18021 11.4375 9.44688 11.3125C9.71354 11.1875 9.97188 11.0583 10.2219 10.925C10.1385 10.5583 10.076 10.1583 10.0344 9.725C9.99271 9.29167 9.97188 8.825 9.97188 8.325C9.97188 5.925 10.4469 3.9375 11.3969 2.3625C12.3469 0.7875 13.5385 0 14.9719 0C15.8385 0 16.5469 0.320833 17.0969 0.9625C17.6469 1.60417 17.9219 2.5 17.9219 3.65C17.9219 5.08333 17.4677 6.5 16.5594 7.9C15.651 9.3 14.3885 10.5583 12.7719 11.675C12.8885 11.7917 13.0094 11.8792 13.1344 11.9375C13.2594 11.9958 13.3885 12.025 13.5219 12.025C13.8719 12.025 14.2802 11.8333 14.7469 11.45C15.2135 11.0667 15.6635 10.55 16.0969 9.9C16.2635 9.66667 16.476 9.50417 16.7344 9.4125C16.9927 9.32083 17.2469 9.33333 17.4969 9.45C17.7469 9.58333 17.9302 9.77917 18.0469 10.0375C18.1635 10.2958 18.1969 10.5667 18.1469 10.85C18.1135 11.05 18.0969 11.2417 18.0969 11.425C18.0969 11.6083 18.1219 11.7833 18.1719 11.95C18.2552 11.9167 18.351 11.8625 18.4594 11.7875C18.5677 11.7125 18.6802 11.6167 18.7969 11.5C18.9969 11.3167 19.2344 11.2125 19.5094 11.1875C19.7844 11.1625 20.0302 11.2333 20.2469 11.4C20.4802 11.5833 20.6052 11.8083 20.6219 12.075C20.6385 12.3417 20.5552 12.5667 20.3719 12.75C19.9885 13.1333 19.5844 13.4375 19.1594 13.6625C18.7344 13.8875 18.3302 14 17.9469 14C17.5969 14 17.2844 13.8958 17.0094 13.6875C16.7344 13.4792 16.5052 13.1583 16.3219 12.725C15.8552 13.1417 15.3802 13.4583 14.8969 13.675C14.4135 13.8917 13.9302 14 13.4469 14ZM1.99688 19C1.71354 19 1.47604 18.9042 1.28438 18.7125C1.09271 18.5208 0.996875 18.2833 0.996875 18C0.996875 17.7167 1.09271 17.4792 1.28438 17.2875C1.47604 17.0958 1.71354 17 1.99688 17C2.28021 17 2.51771 17.0958 2.70938 17.2875C2.90104 17.4792 2.99688 17.7167 2.99688 18C2.99688 18.2833 2.90104 18.5208 2.70938 18.7125C2.51771 18.9042 2.28021 19 1.99688 19ZM5.99688 19C5.71354 19 5.47604 18.9042 5.28438 18.7125C5.09271 18.5208 4.99688 18.2833 4.99688 18C4.99688 17.7167 5.09271 17.4792 5.28438 17.2875C5.47604 17.0958 5.71354 17 5.99688 17C6.28021 17 6.51771 17.0958 6.70937 17.2875C6.90104 17.4792 6.99688 17.7167 6.99688 18C6.99688 18.2833 6.90104 18.5208 6.70937 18.7125C6.51771 18.9042 6.28021 19 5.99688 19ZM9.99687 19C9.71354 19 9.47604 18.9042 9.28438 18.7125C9.09271 18.5208 8.99687 18.2833 8.99687 18C8.99687 17.7167 9.09271 17.4792 9.28438 17.2875C9.47604 17.0958 9.71354 17 9.99687 17C10.2802 17 10.5177 17.0958 10.7094 17.2875C10.901 17.4792 10.9969 17.7167 10.9969 18C10.9969 18.2833 10.901 18.5208 10.7094 18.7125C10.5177 18.9042 10.2802 19 9.99687 19ZM13.9969 19C13.7135 19 13.476 18.9042 13.2844 18.7125C13.0927 18.5208 12.9969 18.2833 12.9969 18C12.9969 17.7167 13.0927 17.4792 13.2844 17.2875C13.476 17.0958 13.7135 17 13.9969 17C14.2802 17 14.5177 17.0958 14.7094 17.2875C14.901 17.4792 14.9969 17.7167 14.9969 18C14.9969 18.2833 14.901 18.5208 14.7094 18.7125C14.5177 18.9042 14.2802 19 13.9969 19ZM17.9969 19C17.7135 19 17.476 18.9042 17.2844 18.7125C17.0927 18.5208 16.9969 18.2833 16.9969 18C16.9969 17.7167 17.0927 17.4792 17.2844 17.2875C17.476 17.0958 17.7135 17 17.9969 17C18.2802 17 18.5177 17.0958 18.7094 17.2875C18.901 17.4792 18.9969 17.7167 18.9969 18C18.9969 18.2833 18.901 18.5208 18.7094 18.7125C18.5177 18.9042 18.2802 19 17.9969 19Z"
+                                fill={
+                                  activePanel === tab.id && rightSidebarOpen
+                                      ? "#2950DA"
+                                      : "#40566D"
+                                }
+                            />
+                          </svg>
+                          // ... your signature SVG ...
                       )}
                     </button>
                 );

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 
 // Prop Types & Helpers
 import type { DocumentMetadata } from "../../pages/DocumentViewer";

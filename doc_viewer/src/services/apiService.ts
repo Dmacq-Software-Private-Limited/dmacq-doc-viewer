@@ -1,6 +1,27 @@
 //const API_BASE_URL = 'http://localhost:8001/api'
 
 const API_BASE_URL = 'http://13.203.247.119:8001/api';
+const AUDIT_API_BASE_URL = 'http://localhost:8002'
+ // test server url for testing we will be replacing with actual dmaq url
+
+export interface PdfAction {
+  type: string;
+  pageUid?: string;
+  angle?: number;
+  affectedPageUids?: string[];
+  newPageUid?: string;
+  newPageUids?: string[];
+  sourceDocId?: string;
+  insertIdx?: number;
+  fromIdx?: number;
+  toIdx?: number;
+  timestamp?: number;
+  user?: string;
+  // add other fields as you need
+}
+
+
+//const API_BASE_URL = 'http://13.203.247.119:8001/api';
 
 export interface OrganizePageOp {
   sourceDocumentId: string;

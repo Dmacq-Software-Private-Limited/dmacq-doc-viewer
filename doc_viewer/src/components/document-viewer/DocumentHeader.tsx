@@ -1,11 +1,9 @@
-
-import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
+import React from 'react';
 import pdfIcon from '../../assets/icons/Group.svg';
 import Download from '../../assets/icons/Download.svg';
 import print from '../../assets/icons/print.svg';
 import close from '../../assets/icons/close.svg';
-import search from '../../assets/icons/search.svg';
+import { apiService } from '@/services/apiService';
 
 
 interface DocumentHeaderProps {
@@ -33,12 +31,73 @@ const DocumentHeader: React.FC<DocumentHeaderProps> = ({ doc, onClose }) => {
     });
   };
 
-  const handleDownload = () => {
-    console.log('Download PDF');
+  const handleDownload = async () => {
+    if (!doc.id) return;
+    try {
+      const docDetails = await apiService.getDocument(doc.id);
+      const downloadUrl = apiService.getDocumentDownloadUrl(doc.id);
+      const response = await fetch(downloadUrl);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = docDetails.originalName || `${doc.name}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Download failed:", error);
+    }
   };
 
-  const handlePrint = () => {
-    window.print();
+  const handlePrint = async () => {
+    if (!doc.id) return;
+    try {
+      const downloadUrl = apiService.getDocumentDownloadUrl(doc.id);
+      const response = await fetch(downloadUrl);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const iframe = document.createElement('iframe');
+      iframe.style.position = 'absolute';
+      iframe.style.left = '-9999px';
+      iframe.style.top = '-9999px';
+      iframe.src = blobUrl;
+      document.body.appendChild(iframe);
+
+      iframe.onload = () => {
+        setTimeout(() => {
+          try {
+            const iFrameWindow = iframe.contentWindow;
+            if (iFrameWindow) {
+              const cleanup = () => {
+                document.body.removeChild(iframe);
+                URL.revokeObjectURL(blobUrl);
+                iFrameWindow.removeEventListener('afterprint', cleanup);
+              };
+              iFrameWindow.addEventListener('afterprint', cleanup);
+              iFrameWindow.focus();
+              iFrameWindow.print();
+            } else {
+              throw new Error("Could not get iframe content window.");
+            }
+          } catch (e) {
+            console.error("Printing from iframe failed:", e);
+            // Fallback cleanup
+            document.body.removeChild(iframe);
+            URL.revokeObjectURL(blobUrl);
+          }
+        }, 500); // Delay to ensure PDF is rendered in iframe
+      };
+    } catch (error) {
+      console.error("Print failed:", error);
+    }
   };
 
 

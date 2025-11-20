@@ -5,15 +5,15 @@ import { fetchUserSessionAndPermissions } from "../../services/rbacService";
 export const RBACContext = createContext(null);
 
 export const RBACProvider = ({ children }) => {
-    const [session, setSession] = useState({ token: null, permissions: null });
+    const [session, setSession] = useState({ token: null, user: null, permissions: null });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         async function loadPermissions() {
             try {
-                const { token, permissions } = await fetchUserSessionAndPermissions();
-                setSession({ token, permissions });
+                const { token, user, permissions } = await fetchUserSessionAndPermissions();
+                setSession({ token, user, permissions });
             } catch (e) {
                 setError(e.message || "Failed to fetch session/permissions");
             } finally {
@@ -29,6 +29,7 @@ export const RBACProvider = ({ children }) => {
         </RBACContext.Provider>
     );
 };
+
 
 // Simple permission hook
 export const useRBAC = () => {

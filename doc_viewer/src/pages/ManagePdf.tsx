@@ -27,9 +27,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useRBAC } from "@/components/rbac/RBACProvider";
 import { toast } from "@/hooks/use-toast";
 
-
-
-
 type PageUID = string;
 type PageCardData = {
     uid: PageUID;
@@ -68,14 +65,11 @@ const ManagePdf: React.FC = () => {
     const [toastMessage, setToastMessage] = useState("");
     const [newDocumentId, setNewDocumentId] = useState<string | null>(null);
     const [showDeleteAllPagesModal, setShowDeleteAllPagesModal] = useState(false);
-    const { permissions } = useRBAC();
+    const { permissions, user } = useRBAC();
     const [pendingActions, setPendingActions] = useState<any[]>([]);
-
 
     useEffect(() => {
         if (permissions && !permissions.canManagePdf) {
-            // Redirect to home or an "Access Denied" page
-            console.log("/document/${documentId}")
             navigate('/', { replace: true });
             toast({
                 title: "Access Denied",
@@ -84,7 +78,6 @@ const ManagePdf: React.FC = () => {
             });
         }
     }, [permissions, navigate]);
-
 
     useEffect(() => {
         async function fetchDetails() {
@@ -134,23 +127,23 @@ const ManagePdf: React.FC = () => {
         setDirty(true);
     };
 
-    // Core page actions
+    // Core page actions with action tracking
+
     const rotatePage = (uid: PageUID, angle: number) => {
         saveHistory();
         setPages(list => list.map(p => p.uid === uid ? { ...p, rotation: (p.rotation + angle + 360) % 360 } : p));
-
-        // Record the action:
-        // setPendingActions(actions => [
-        //     ...actions,
-        //     {
-        //         type: "rotate",
-        //         pageUid: uid,
-        //         angle,
-        //         timestamp: Date.now(),
-        //         user: user?.id // provide user info from context if possible
-        //     }
-        // ]);
+        setPendingActions(actions => [
+            ...actions,
+            {
+                type: "rotate",
+                pageUid: uid,
+                angle,
+                timestamp: Date.now(),
+                user: user?.name || user?.id || "unknown"
+            }
+        ]);
     };
+
     const duplicatePage = (uid: PageUID) => {
         const idx = pages.findIndex(p => p.uid === uid);
         if (idx === -1) return;
@@ -159,7 +152,18 @@ const ManagePdf: React.FC = () => {
         const copy = { ...orig, uid: `${orig.uid}-copy-${Date.now()}`, selected: false };
         const newList = [...pages.slice(0, idx + 1), copy, ...pages.slice(idx + 1)];
         setPages(newList.map((p, i) => ({ ...p, displayIndex: i + 1 })));
+        setPendingActions(actions => [
+            ...actions,
+            {
+                type: "duplicate",
+                pageUid: uid,
+                newPageUid: copy.uid,
+                timestamp: Date.now(),
+                user: user?.name || user?.id || "unknown"
+            }
+        ]);
     };
+
     const deletePage = (uid: PageUID) => {
         if (pages.filter(p => !p.isDeleted).length === 1) {
             setShowDeleteAllPagesModal(true);
@@ -170,14 +174,42 @@ const ManagePdf: React.FC = () => {
             list.map(p => p.uid === uid ? { ...p, isDeleted: true } : p)
                 .map((p, i) => ({ ...p, displayIndex: i + 1 }))
         );
+        setPendingActions(actions => [
+            ...actions,
+            {
+                type: "delete",
+                pageUid: uid,
+                timestamp: Date.now(),
+                user: user?.name || user?.id || "unknown"
+
+            }
+        ]);
     };
+
     const toggleSelectPage = (uid: PageUID) => {
         setPages(list => list.map(p => p.uid === uid ? { ...p, selected: !p.selected } : p));
+        // action tracking not necessary for selection, unless you want to audit user selection events
     };
 
     // Bulk
     const selectedPages = pages.filter((p) => p.selected && !p.isDeleted);
-    const bulkRotate = (angle: number) => { saveHistory(); setPages(list => list.map(p => p.selected ? { ...p, rotation: (p.rotation + angle + 360) % 360 } : p)); };
+
+    const bulkRotate = (angle: number) => {
+        saveHistory();
+        setPages(list => list.map(p => p.selected ? { ...p, rotation: (p.rotation + angle + 360) % 360 } : p));
+        setPendingActions(actions => [
+            ...actions,
+            {
+                type: "bulkRotate",
+                angle,
+                affectedPageUids: selectedPages.map(p => p.uid),
+                timestamp: Date.now(),
+                user: user?.name || user?.id || "unknown"
+
+            }
+        ]);
+    };
+
     const bulkDelete = () => {
         if (pages.filter(p => p.selected && !p.isDeleted).length >= pages.filter(p => !p.isDeleted).length) {
             setShowDeleteAllPagesModal(true);
@@ -185,17 +217,42 @@ const ManagePdf: React.FC = () => {
         }
         saveHistory();
         setPages(list => list.map(p => p.selected ? { ...p, isDeleted: true, selected: false } : p));
+        setPendingActions(actions => [
+            ...actions,
+            {
+                type: "bulkDelete",
+                affectedPageUids: selectedPages.map(p => p.uid),
+                timestamp: Date.now(),
+                user: user?.name || user?.id || "unknown"
+
+            }
+        ]);
     };
+
     const bulkDuplicate = () => {
         saveHistory();
         let withCopies: PageCardData[] = [];
+        const duplicatedUids: string[] = [];
         pages.forEach((p, i) => {
             withCopies.push({ ...p });
             if (p.selected && !p.isDeleted) {
-                withCopies.push({ ...p, uid: `${p.uid}-copy-${Date.now()}`, selected: false });
+                const newUid = `${p.uid}-copy-${Date.now()}`;
+                duplicatedUids.push(newUid);
+                withCopies.push({ ...p, uid: newUid, selected: false });
             }
         });
         setPages(withCopies.map((p, i) => ({ ...p, displayIndex: i + 1 })));
+        setPendingActions(actions => [
+            ...actions,
+            {
+                type: "bulkDuplicate",
+                affectedPageUids: selectedPages.map(p => p.uid),
+                newPageUids: duplicatedUids,
+                timestamp: Date.now(),
+                user: user?.name || user?.id || "unknown"
+
+            }
+        ]);
     };
 
     // Insert
@@ -212,8 +269,9 @@ const ManagePdf: React.FC = () => {
             const response = await apiService.uploadDocument(file);
             if (response.totalPages === 1) {
                 const now = Date.now();
+                const newUid = `insert-${response.id}-1-${now}`;
                 const insertPages: PageCardData[] = [{
-                    uid: `insert-${response.id}-1-${now}`,
+                    uid: newUid,
                     sourceIndex: 0,
                     displayIndex: 0,
                     rotation: 0,
@@ -228,6 +286,18 @@ const ManagePdf: React.FC = () => {
                         displayIndex: i + 1,
                     }))
                 );
+                setPendingActions(actions => [
+                    ...actions,
+                    {
+                        type: "insert",
+                        pageUid: newUid,
+                        sourceDocId: response.id,
+                        insertIdx: idx,
+                        timestamp: now,
+                        user: user?.name || user?.id || "unknown"
+
+                    }
+                ]);
                 setToastMessage("Page has been added successfully.");
                 setShowSuccessToast(true);
             } else {
@@ -240,6 +310,7 @@ const ManagePdf: React.FC = () => {
         };
         input.click();
     };
+
     const handleInsertConfirm = async () => {
         if (!insertPdfFile || !insertUploadDocId) return;
         let insertPageNumbers: number[] = [];
@@ -275,6 +346,21 @@ const ManagePdf: React.FC = () => {
                 displayIndex: i + 1,
             }))
         );
+        // Track insert actions for all inserted pages
+        setPendingActions(actions =>
+            [
+                ...actions,
+                ...insertPages.map((page, i) => ({
+                    type: "insert",
+                    pageUid: page.uid,
+                    sourceDocId: insertUploadDocId,
+                    insertIdx: insertIdx + i,
+                    timestamp: now + i,
+                    user: user?.name || user?.id || "unknown"
+
+                }))
+            ]
+        );
         setShowInsertModal(false);
         setInsertPdfFile(null);
         setInsertUploadDocId("");
@@ -283,7 +369,7 @@ const ManagePdf: React.FC = () => {
         setInsertMethod("all");
     };
 
-    // Drag & Drop
+    // Drag & Drop (optional: track as reorder action)
     const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
     const onDragEnd = (event: any) => {
         const { active, over } = event;
@@ -296,6 +382,18 @@ const ManagePdf: React.FC = () => {
                 ...p, displayIndex: i + 1,
             }));
             setPages(reordered);
+            setPendingActions(actions => [
+                ...actions,
+                {
+                    type: "reorder",
+                    pageUid: active.id,
+                    fromIdx: oldIdx,
+                    toIdx: newIdx,
+                    timestamp: Date.now(),
+                    user: user?.name || user?.id || "unknown"
+
+                }
+            ]);
         }
     };
 
@@ -308,8 +406,10 @@ const ManagePdf: React.FC = () => {
             alert("Error deleting document: " + (e as Error).message);
         }
     };
+
+    // <-- THE MOST IMPORTANT CHANGE FOR THIS FEATURE:
+    // On Save, submit both document changes and the action trail:
     const handleSave = async () => {
-        // Defensive RBAC check before API call
         const recipe = pages.filter(p => !p.isDeleted).map(p => ({
             sourceDocumentId: p.inserted ? p.insertDocId : documentId,
             sourcePageIndex: p.sourceIndex,
@@ -318,9 +418,16 @@ const ManagePdf: React.FC = () => {
         try {
             setIsSaving(true);
             const result = await apiService.organizePdf(documentId!, recipe);
+
+            // Submit tracked actions for this session
+            if (pendingActions.length > 0) {
+                await apiService.submitPdfActions(documentId!, pendingActions);
+                setPendingActions([]);
+            }
+
             setIsSaving(false);
             setDirty(false);
-            setToastMessage("Changes has been saved successfully");
+            setToastMessage("Changes have been saved successfully");
             setShowSuccessToast(true);
             setNewDocumentId(result.id);
         } catch (e) {
@@ -329,7 +436,7 @@ const ManagePdf: React.FC = () => {
         }
     };
 
-    // Header data
+// Header data
     const documentDataForHeader = documentDetails
         ? {
             id: documentDetails.id,

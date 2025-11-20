@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import DeleteConfirmationModal from './DeleteConfirmationModal';
 
@@ -44,6 +44,8 @@ const CommentsPanel: React.FC<CommentsPanelProps> = ({ documentId }) => {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [commentToDelete, setCommentToDelete] = useState<string | null>(null);
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editingCommentContent, setEditingCommentContent] = useState('');
 
   const [comments, setComments] = useState<Comment[]>([
     { id: '1', user: 'Kiran Patel', content: 'The Invoice For March Is Yet To Arrive. Please Consult The Finance Team Regarding This.', timestamp: '2025-07-25T15:30:00Z' },
@@ -71,6 +73,25 @@ const CommentsPanel: React.FC<CommentsPanelProps> = ({ documentId }) => {
       setComments(newComments);
       setNewComment('');
     }
+  };
+
+  const handleEditComment = (comment: Comment) => {
+    setEditingCommentId(comment.id);
+    setEditingCommentContent(comment.content);
+    setOpenMenuId(null);
+  };
+
+  const handleSaveComment = (id: string) => {
+    setComments(comments.map(comment =>
+      comment.id === id ? { ...comment, content: editingCommentContent, isEdited: true } : comment
+    ));
+    setEditingCommentId(null);
+    setEditingCommentContent('');
+  };
+
+  const handleCancelEdit = () => {
+    setEditingCommentId(null);
+    setEditingCommentContent('');
   };
 
   const handleDeleteComment = (id: string) => {
@@ -143,24 +164,26 @@ const CommentsPanel: React.FC<CommentsPanelProps> = ({ documentId }) => {
                       {comment.user}
                     </p>
                     <p className="text-[12px] text-[#58728D] mt-0.5">
-                      {formatDate(comment.timestamp)}
+                      {comment.isEdited && <span className="text-xs"> Edited • </span>} {formatDate(comment.timestamp)}
                     </p>
                   </div>
                 </div>
                 <div className="flex gap-2 items-center">
-                  <img src={ReplyIcon} alt="Reply" className="w-6 h-6 cursor-pointer" />
+                  <button className='p-1'>
+                      <img src={ReplyIcon} alt="Reply" className="w-6 h-6 cursor-pointer" />
+                    </button>
                   <div className="relative">
-                    <button onClick={() => setOpenMenuId(openMenuId === comment.id ? null : comment.id)}>
+                    <button className='p-1' onClick={() => setOpenMenuId(openMenuId === comment.id ? null : comment.id)}>
                       <img src={MoreOptionsIcon} alt="Options" className="w-6 h-6 cursor-pointer" />
                     </button>
                     {openMenuId === comment.id && (
                       <div className="absolute right-[0px] top-[25px] w-[107px] rounded-lg bg-white shadow-lg z-10">
                         <ul className="flex w-full flex-col items-start py-2">
                           <li className="self-stretch">
-                            <a href="#" className="flex items-center self-stretch gap-2 px-4 py-2 text-sm font-normal font-[Noto_Sans] leading-5 text-[#192839] hover:bg-gray-100">
+                            <button onClick={() => handleEditComment(comment)} className="flex items-center self-stretch gap-2 px-4 py-2 text-sm font-normal font-[Noto_Sans] leading-5 text-[#192839] hover:bg-gray-100 w-full">
                               <img src={EditIcon} alt="Edit" className="w-4 h-4" />
                               Edit
-                            </a>
+                            </button>
                           </li>
                           <li className="self-stretch">
                             <button onClick={() => handleDeleteComment(comment.id)} className="flex items-center self-stretch gap-2 px-4 py-2 text-sm font-normal font-[Noto_Sans] leading-5 text-[#192839] hover:bg-gray-100 w-full">
@@ -176,9 +199,50 @@ const CommentsPanel: React.FC<CommentsPanelProps> = ({ documentId }) => {
               </div>
 
               {/* 3. This is the comment body, now separate and correctly indented */}
-              <p className="text-[#243547] text-[12px] font-medium ml-11">
-                {comment.content}
-              </p>
+              {editingCommentId === comment.id ? (
+                <div className="py-2 px-3 rounded-lg border border-[rgba(48,94,255,0.18)] bg-[#FFFFFF]">
+                  <div className="flex flex-col w-full+">
+                    <div className="flex items-center">
+                      <div className="w-6 h-6 rounded-full overflow-hidden flex-shrink-0">
+                        <img
+                          src={userAvatarMap[comment.user] || person1}
+                          alt="Avatar"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <input
+                        ref={input => input && input.focus()}
+                        type="text"
+                        value={editingCommentContent}
+                        onChange={(e) => setEditingCommentContent(e.target.value)}
+                        className="flex-1 ml-3 h-8 text-sm bg-transparent text-[#192839] placeholder-gray-500 focus:outline-none font-medium capitalize"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleSaveComment(comment.id);
+                          if (e.key === 'Escape') handleCancelEdit();
+                        }}
+                      />
+                    </div>
+                    <div className="flex justify-between items-center mt-2">
+                      <span className="text-xs text-gray-500">Use @ for mention people</span>
+                      <button
+                        onClick={() => handleSaveComment(comment.id)}
+                        className="text-[#6B7280] hover:text-[#2950DA] disabled:opacity-50 p-1"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <path d="M1.34016 14L15.3335 8L1.34016 2L1.3335 6.66667L11.3335 8L1.3335 9.33333L1.34016 14Z" fill="#666666"/>
+                      </svg>
+                      </button>
+                    </div>
+                  </div>
+                  <div className="text-[10px] text-[#768EA7] font-medium mt-1 w-[283px] h-[14px]">
+                    escape to <button onClick={handleCancelEdit} className="text-[#192839] font-bold">cancel</button> • enter to <button onClick={() => handleSaveComment(comment.id)} className="text-[#192839] font-bold">save</button>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-[#243547] text-[12px] font-medium ml-11">
+                  {comment.content}
+                </p>
+              )}
             </div>
             ))
           )}

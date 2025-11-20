@@ -48,6 +48,7 @@ const PdfViewer: React.FC<DocumentViewerProps> = ({
         [searchQuery]
     );
 
+
     // The counting logic is now handled in the parent component.
     useEffect(() => {
         if (!pdf || !searchQuery || !onSearchResults) {

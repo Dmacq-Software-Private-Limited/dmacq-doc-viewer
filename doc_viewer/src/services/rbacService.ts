@@ -24,7 +24,7 @@ export async function fetchUserSessionAndPermissions() {
             canAnnotate: true,
             canManagePdf: true,
             canViewAudit: true,
-            canSign: false,
+            canSign: true,
             canSeeVersionHistory: true,
             canViewDetails: true,
             canViewMetadata: true
