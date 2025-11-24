@@ -1,13 +1,9 @@
 //const API_BASE_URL = 'http://localhost:8001/api'
 
 // const API_BASE_URL = 'http://13.203.247.119:8001/api';
-<<<<<<< HEAD
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-=======
 // const API_BASE_URL = 'http://192.168.0.93:8001/api';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
->>>>>>> 60285ba078085baf56d658d0f4f3db54780f20dc
 export interface OrganizePageOp {
   sourceDocumentId: string;
   sourcePageIndex: number;
