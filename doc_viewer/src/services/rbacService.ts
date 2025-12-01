@@ -1,13 +1,8 @@
 // src/services/rbacService.ts
 import axios from "axios";
-
-
 const API_BASE_URL = 'http://13.203.247.119:8001/api';
-// const API_BASE_URL = 'http://localhost:8001/api';
-
-// MOCK FUNCTION FOR DEVELOPMENT WITHOUT BACKEND
 export async function fetchUserSessionAndPermissions() {
-    // Immediately return a dummy/mock session & permissions object
+    
     return Promise.resolve({
         token: "mocked-token-1234",
         user: {
@@ -17,6 +12,36 @@ export async function fetchUserSessionAndPermissions() {
             roles: ["admin", "editor"],
             department: "Engineering"
         },
+        users:[
+{
+            id: "dev-123",
+            name: "Tester",
+            email: "devtester@example.com",
+            roles: ["admin", "editor"],
+            department: "Engineering"
+        },{
+            id: "dev-13",
+            name: "Developer",
+            email: "devtester@example.com",
+            roles: ["admin", "editor"],
+            department: "Engineering"
+        }
+        ],
+        metadata:{
+  folder: "Employee_2024",
+  docType: "Invoice",
+  master: "Invoice_Master, Invoice_Data",
+  metaData: {
+    commonProperties: {
+      fillName: "Akash Sharma",
+      emailAddress: "akash.sharma@example.com",
+      contactNumber: "9876543210",
+    },
+    docTypeFields: {
+      invoice: "INV-000002",
+    },
+  },
+},
         permissions: {
             canView: true,
             canEdit: true,

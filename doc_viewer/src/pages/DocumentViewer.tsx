@@ -15,11 +15,7 @@ import metadataIcon from "@/assets/icons/Icon=Metadata.svg";
 import commentsIcon from "@/assets/icons/Icon=Comment.svg";
 import auditIcon from "@/assets/icons/Icon=Audit Log.svg"
 import detailsIcon from "@/assets/icons/Icon=Details.svg";
-import signatureIcon from "@/assets/icons/sign.svg";
-import annotationIcon from "@/assets/icons/AnnotationIcon.svg";
-import versionHistoryIcon from "@/assets/icons/Icon=version-history.svg";
-import managePdfIcon from "@/assets/icons/ManagePdf.svg";
-import managePdfOnClickIcon from "@/assets/icons/ManagePdfonclick.svg";
+import annotationIcon from "@/assets/icons/Icon=Annotation.svg";
 import HighlighterIcon from "@/assets/icons/Annotation-Highlighter.svg";
 import SquareIcon from "@/assets/icons/Annotation-square.svg";
 import ReductionIcon  from "@/assets/icons/Annotation-reduction.svg";
@@ -721,13 +717,14 @@ const DocumentViewerPage = () => {
           <div className="hidden lg:flex h-full">
             {rightSidebarOpen && (
               <div
-                className="bg-white border-r border-gray-200 overflow-y-auto no-scrollbar px-5"
+                className="bg-white border-r border-gray-200 overflow-y-auto w-[320px] no-scrollbar"
                 style={{
                   display: "flex",
                   width: "398px",
                   flexDirection: "column",
                   alignItems: "flex-start",
                   alignSelf: "stretch",
+                  width:"398px",
                 }}
               >
 

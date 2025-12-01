@@ -116,10 +116,10 @@ const CommentsPanel: React.FC<CommentsPanelProps> = ({ documentId }) => {
   }, [comments, sortOrder]);
 
   return (
-    <div className="flex flex-col h-full w-full">
+    <div className="flex flex-col h-full w-full px-5">
       {/* HEADER */}
       <div className="w-full py-3">
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center ">
           <h2 className="text-[#192839] font-[Noto_Sans] text-[18px] not-italic font-bold leading-normal capitalize">
             Comment
           </h2>
