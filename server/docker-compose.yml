@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  document-viewer-api:
+    build: .
+    ports:
+      - "8001:8000"
+    volumes:
+      - ./uploads:/app/uploads
+      - ./converted:/app/converted
+      - ./thumbnails:/app/thumbnails
+    environment:
+      - DEBUG=true
+      - HOST=0.0.0.0
+      - PORT=8000
+    restart: unless-stopped

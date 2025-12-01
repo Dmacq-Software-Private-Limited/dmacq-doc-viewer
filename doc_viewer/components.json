@@ -1,0 +1,66 @@
+{
+  "$schema": "https://ui.shadcn.com/schema.json",
+  "style": "default",
+  "rsc": true,
+  "tsx": true,
+  "tailwind": {
+    "config": "tailwind.config.js",
+    "css": "src/index.css"
+  },
+  "aliases": {
+    "components": "@/components",
+    "utils": "@/lib/utils"
+  },
+  "components": [
+    {
+      "name": "Card",
+      "path": "@/components/ui/card",
+      "import": "Card, CardContent, CardHeader, CardTitle"
+    },
+    {
+      "name": "Button",
+      "path": "@/components/ui/button",
+      "import": "Button"
+    },
+    {
+      "name": "DocumentViewer",
+      "path": "@/components/document-viewer/DocumentViewer",
+      "import": "DocumentViewer"
+    },
+    {
+      "name": "DocumentHeader",
+      "path": "@/components/document-viewer/DocumentHeader",
+      "import": "DocumentHeader"
+    },
+    {
+      "name": "PageNavigation",
+      "path": "@/components/document-viewer/PageNavigation",
+      "import": "PageNavigation"
+    },
+    {
+      "name": "MetadataPanel",
+      "path": "@/components/document-viewer/MetadataPanel",
+      "import": "MetadataPanel"
+    },
+    {
+      "name": "DetailsPanel",
+      "path": "@/components/document-viewer/DetailsPanel",
+      "import": "DetailsPanel"
+    },
+    {
+      "name": "AuditTrailPanel",
+      "path": "@/components/document-viewer/AuditTrailPanel",
+      "import": "AuditTrailPanel"
+    },
+    {
+      "name": "CommentsPanel",
+      "path": "@/components/document-viewer/CommentsPanel",
+      "import": "CommentsPanel"
+    },
+    {
+      "name": "AnnotationLayer",
+      "path": "@/components/document-viewer/AnnotationLayer",
+      "import": "AnnotationLayer"
+    }
+  ]
+}

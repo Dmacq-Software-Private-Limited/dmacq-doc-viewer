@@ -1,0 +1,12 @@
+uploads/
+converted/
+thumbnails/
+*.pdf
+*.png
+*.jpg
+*.heic
+*.bmp
+*.dds
+*.ico
+node_modules/
+.idea
