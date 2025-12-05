@@ -1,6 +1,6 @@
 //const API_BASE_URL = 'http://localhost:8001/api'
 
-const API_BASE_URL = 'http://13.203.247.119:8001/api';
+const API_BASE_URL = 'http://192.168.0.93:8001/api';
 const AUDIT_API_BASE_URL = 'http://localhost:8002'
  // test server url for testing we will be replacing with actual dmaq url
 
