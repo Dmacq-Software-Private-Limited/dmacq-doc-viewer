@@ -1,6 +1,6 @@
 // src/services/rbacService.ts
 import axios from "axios";
-const API_BASE_URL = 'http://13.203.247.119:8001/api';
+const API_BASE_URL = 'http://192.168.0.93:8001/api';
 export async function fetchUserSessionAndPermissions() {
     
     return Promise.resolve({
