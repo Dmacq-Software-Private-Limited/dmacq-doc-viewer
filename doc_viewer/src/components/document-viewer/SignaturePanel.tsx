@@ -1,5 +1,5 @@
 import React from 'react';
-import NoSignatureIcon from '@/assets/icons/no-sign.png';
+// import NoSignatureIcon from '@/assets/icons/no-sign.png';
 import SignatureIcon from '@/assets/icons/sign.svg';
 import { Separator } from '@/components/ui/separator';
 
