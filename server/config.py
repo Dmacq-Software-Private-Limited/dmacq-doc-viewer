@@ -5,7 +5,7 @@ from typing import ClassVar , Dict
 
 class Settings(BaseSettings):
         HOST: str = "0.0.0.0"
-        PORT: int = 8000
+        PORT: int = 8001
         DEBUG: bool = True
 
         # File upload settings
