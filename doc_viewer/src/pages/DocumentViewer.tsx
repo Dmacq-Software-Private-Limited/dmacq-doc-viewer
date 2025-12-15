@@ -9,6 +9,7 @@ import AuditTrailPanel from "@/components/document-viewer/AuditTrailPanel";
 import CommentsPanel from "@/components/document-viewer/CommentsPanel";
 import AnnotationPanel from "@/components/document-viewer/AnnotationPanel";
 import VersionHistoryPanel from "@/components/document-viewer/VersionHistoryPanel";
+import versionHistoryIcon from "@/assets/icons/Icon=version-history.svg";
 import SignaturePanel from "@/components/document-viewer/SignaturePanel";
 import FontViewer from "@/components/document-viewer/FontViewer";
 import metadataIcon from "@/assets/icons/Icon=Metadata.svg";
