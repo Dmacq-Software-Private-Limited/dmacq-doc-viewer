@@ -14,7 +14,7 @@ app.add_middleware(
         "http://localhost:5173", "http://localhost:3000", "http://localhost:8081",
         "http://localhost:8000", "http://localhost:8080", "http://localhost:8001",
         "http://192.168.0.93:8081", "http://192.168.0.93:8001", "http://192.168.0.93:8080",
-        "https://docviewer-dev.dmacq.app/"
+        "https://docviewer-dev.dmacq.app"
     ],
     allow_credentials=True,
     allow_methods=["*"],
